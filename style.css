@@ -1,0 +1,715 @@
+/* ═══════════════════════════════════════════
+   Eternal Incense — 영원한 향
+   Memorial page with perpetual incense
+   ═══════════════════════════════════════════ */
+
+:root {
+  --bg: #0c0a09;
+  --bg-card: #1c1917;
+  --bg-card-hover: #231f1b;
+  --bg-modal: #1a1714;
+  --text: #d6cfc4;
+  --text-muted: #8c8279;
+  --text-dim: #5c554d;
+  --gold: #b8960b;
+  --gold-soft: #c9a96e;
+  --ember: #e85d26;
+  --ember-glow: #ff9f5a;
+  --incense-smoke: rgba(180, 170, 155, 0.25);
+  --border: rgba(255, 255, 255, 0.06);
+  --radius: 8px;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── Header ─── */
+
+header {
+  padding: 3rem 2rem 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+header h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 2.2rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Main ─── */
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+/* ─── Alerts ─── */
+
+#alerts {
+  margin-bottom: 1.5rem;
+}
+
+.alert {
+  background: rgba(184, 150, 11, 0.08);
+  border-left: 3px solid var(--gold);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--gold-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.alert strong {
+  font-weight: 500;
+}
+
+/* ─── Memorial Grid ─── */
+
+.memorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* ─── Memorial Card ─── */
+
+.memorial-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.memorial-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(0.15) brightness(0.9);
+}
+
+.card-photo-placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #1a1714 0%, #2a2520 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-name {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.card-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* ─── Incense ─── */
+
+.incense-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 80px;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.incense-stick {
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to top, #8B7355, #a08060);
+  position: relative;
+  margin: 0 8px;
+  border-radius: 1px;
+}
+
+.incense-stick::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--ember);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--ember), 0 0 12px var(--ember-glow);
+  animation: ember-pulse 2s ease-in-out infinite;
+}
+
+.smoke-container {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  pointer-events: none;
+}
+
+.smoke {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  background: var(--incense-smoke);
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: smoke-rise var(--duration, 4s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes smoke-rise {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 0.5;
+  }
+  25% {
+    transform: translateX(var(--drift1, 4px)) translateY(-15px) scale(1.8);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(var(--drift2, -3px)) translateY(-30px) scale(2.5);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translateX(var(--drift3, 5px)) translateY(-42px) scale(3);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateX(var(--drift4, -2px)) translateY(-55px) scale(3.5);
+    opacity: 0;
+  }
+}
+
+@keyframes ember-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px var(--ember), 0 0 8px rgba(232, 93, 38, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 8px var(--ember), 0 0 16px rgba(255, 159, 90, 0.5);
+  }
+}
+
+/* ─── Ritual badges ─── */
+
+.ritual-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ritual-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.ritual-badge.upcoming {
+  background: rgba(184, 150, 11, 0.12);
+  color: var(--gold-soft);
+  border: 1px solid rgba(184, 150, 11, 0.2);
+}
+
+.ritual-badge.past {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.ritual-badge.imminent {
+  background: rgba(184, 150, 11, 0.2);
+  color: var(--gold);
+  border: 1px solid rgba(184, 150, 11, 0.35);
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ─── Card actions ─── */
+
+.card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.memorial-card:hover .card-actions {
+  opacity: 1;
+}
+
+.btn-delete {
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: color 0.2s, background 0.2s;
+}
+
+.btn-delete:hover {
+  color: #e85d56;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* ─── Add Button ─── */
+
+#add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px dashed var(--text-dim);
+  color: var(--text-muted);
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+#add-btn:hover {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+
+#add-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ─── Modal ─── */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 90%;
+  max-width: 420px;
+}
+
+.modal-content h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: var(--gold);
+}
+
+.photo-upload {
+  position: relative;
+  border: 1px dashed var(--text-dim);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.photo-upload:hover {
+  border-color: var(--gold-soft);
+}
+
+.photo-upload input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.upload-placeholder svg {
+  stroke: var(--text-dim);
+}
+
+#photo-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+#photo-preview.hidden {
+  display: none;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.55rem 1.2rem;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: #0c0a09;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: var(--gold-soft);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+/* ─── Detail Modal ─── */
+
+.detail-content {
+  position: relative;
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.detail-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.detail-close:hover {
+  color: var(--text);
+}
+
+.detail-photo {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  filter: grayscale(0.1) brightness(0.92);
+}
+
+.detail-name {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  font-weight: 400;
+  margin-bottom: 0.25rem;
+}
+
+.detail-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.detail-days {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+}
+
+.detail-incense {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+/* ─── Ritual Timeline ─── */
+
+.ritual-timeline {
+  margin-top: 1rem;
+}
+
+.ritual-timeline h3 {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.ritual-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ritual-item:last-child {
+  border-bottom: none;
+}
+
+.ritual-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+
+.ritual-marker.past {
+  background: var(--text-dim);
+}
+
+.ritual-marker.upcoming {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(184, 150, 11, 0.3);
+}
+
+.ritual-marker.imminent {
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(184, 150, 11, 0.5);
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.ritual-info {
+  flex: 1;
+}
+
+.ritual-label {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.ritual-label-kr {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-left: 0.4rem;
+}
+
+.ritual-date-line {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.ritual-countdown {
+  font-size: 0.75rem;
+  color: var(--gold-soft);
+  margin-top: 0.1rem;
+}
+
+.ritual-passed {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+}
+
+/* ─── Annual Memorial ─── */
+
+.annual-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.annual-section h3 {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.annual-date {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.annual-countdown {
+  font-size: 0.8rem;
+  color: var(--gold-soft);
+  margin-top: 0.2rem;
+}
+
+/* ─── Empty state ─── */
+
+.empty-state {
+  text-align: left;
+  padding: 3rem 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.empty-state p:first-child {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 600px) {
+  header {
+    padding: 2rem 1.25rem 1rem;
+  }
+
+  main {
+    padding: 0 1.25rem 3rem;
+  }
+
+  .memorial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content,
+  .detail-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+  }
+}
