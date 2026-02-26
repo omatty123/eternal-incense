@@ -17,14 +17,32 @@
 
   <main>
     <section id="alerts"></section>
-    <section id="memorials" class="memorial-grid"></section>
-    <button id="add-btn" aria-label="Add a memorial">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      Add Memorial
-    </button>
+
+    <section class="prayer-section">
+      <h2 class="section-heading">기도표 <span class="section-sub">Prayer Intentions</span></h2>
+      <div id="prayer-list" class="prayer-list"></div>
+      <button id="add-prayer-btn" class="add-prayer-btn">+ Add intention</button>
+      <div id="prayer-form-container" class="prayer-form hidden">
+        <input type="text" id="prayer-category" placeholder="Category (e.g., Sick relatives)">
+        <input type="text" id="prayer-detail" placeholder="Detail (e.g., Mom's eyes)">
+        <div class="prayer-form-actions">
+          <button id="prayer-cancel" class="btn-secondary btn-sm">Cancel</button>
+          <button id="prayer-save" class="btn-primary btn-sm">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="memorial-section">
+      <h2 class="section-heading">영가 <span class="section-sub">Memorials</span></h2>
+      <div id="memorials" class="memorial-grid"></div>
+      <button id="add-btn" aria-label="Add a memorial">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Memorial
+      </button>
+    </section>
   </main>
 
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">

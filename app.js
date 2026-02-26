@@ -3,27 +3,66 @@
    Memorial ritual calculator & incense shrine
    ═══════════════════════════════════════════ */
 
-const STORAGE_KEY = 'eternal-incense-memorials';
+const MEMORIAL_KEY = 'eternal-incense-memorials';
+const PRAYER_KEY = 'eternal-incense-prayers';
+const SEEDED_KEY = 'eternal-incense-seeded';
 
+// Death day counts as day 1, so 49재 = death + 48 days, 100재 = death + 99 days
 const RITUALS = [
-  { key: '49day',  label: '49th Day',  korean: '사십구재', days: 49 },
-  { key: '100day', label: '100th Day', korean: '백일',     days: 100 },
+  { key: '49day',  label: '49th Day',  korean: '사십구재', days: 48 },
+  { key: '100day', label: '100th Day', korean: '백일',     days: 99 },
   { key: '1year',  label: '1 Year',    korean: '소상',     years: 1 },
   { key: '3year',  label: '3 Years',   korean: '대상',     years: 3 },
+];
+
+const SEED_MEMORIALS = [
+  { id: 'seed-1', name: 'Harry Ceballos',         deathDate: '2023-12-01', photo: null },
+  { id: 'seed-2', name: 'Mateo Chomsisengphet',   deathDate: '2024-04-04', photo: null },
+  { id: 'seed-3', name: 'Queen Minnie',           deathDate: '2024-08-26', photo: null },
+  { id: 'seed-4', name: 'Bodi',                   deathDate: '2025-04-28', photo: null },
+  { id: 'seed-5', name: 'Friday',                 deathDate: '2025-06-13', photo: null },
+  { id: 'seed-6', name: 'Garth Bond',             deathDate: '2025-07-09', photo: null },
+  { id: 'seed-7', name: 'Jean Compan',            deathDate: '2025-08-19', photo: null },
+  { id: 'seed-8', name: 'Abdou Sarr',             deathDate: '2025-08-24', photo: null },
+  { id: 'seed-9', name: 'Rhoda Howe Rasmussen',   deathDate: '2026-02-26', photo: null },
+];
+
+const SEED_PRAYERS = [
+  { id: 'prayer-1', category: 'Parents and especially sick parents', detail: "Mom's eyes" },
+  { id: 'prayer-2', category: 'Grieving Friends', detail: 'Sara, Magali' },
 ];
 
 // ─── Data ───
 
 function loadMemorials() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    return JSON.parse(localStorage.getItem(MEMORIAL_KEY)) || [];
   } catch {
     return [];
   }
 }
 
 function saveMemorials(memorials) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(memorials));
+  localStorage.setItem(MEMORIAL_KEY, JSON.stringify(memorials));
+}
+
+function loadPrayers() {
+  try {
+    return JSON.parse(localStorage.getItem(PRAYER_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function savePrayers(prayers) {
+  localStorage.setItem(PRAYER_KEY, JSON.stringify(prayers));
+}
+
+function seedIfNeeded() {
+  if (localStorage.getItem(SEEDED_KEY)) return;
+  if (loadMemorials().length === 0) saveMemorials(SEED_MEMORIALS);
+  if (loadPrayers().length === 0) savePrayers(SEED_PRAYERS);
+  localStorage.setItem(SEEDED_KEY, '1');
 }
 
 function generateId() {
@@ -34,7 +73,7 @@ function generateId() {
 
 function getRitualDate(deathDate, ritual) {
   const d = new Date(deathDate + 'T00:00:00');
-  if (ritual.days) {
+  if (ritual.days != null) {
     const result = new Date(d);
     result.setDate(result.getDate() + ritual.days);
     return result;
@@ -111,9 +150,29 @@ function createSmokeHTML(stickCount = 3) {
   return html;
 }
 
-// ─── Render ───
+// ─── Render Prayers ───
 
-function render() {
+function renderPrayers() {
+  const prayers = loadPrayers();
+  const list = document.getElementById('prayer-list');
+
+  if (prayers.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:0.5rem 0"><p style="font-size:0.85rem">No prayer intentions yet.</p></div>';
+    return;
+  }
+
+  list.innerHTML = prayers.map(p => `
+    <div class="prayer-item">
+      <span class="prayer-category">${escapeHTML(p.category)}</span>
+      ${p.detail ? `<span class="prayer-detail">${escapeHTML(p.detail)}</span>` : ''}
+      <button class="prayer-remove" data-prayer-delete="${p.id}" title="Remove">&times;</button>
+    </div>
+  `).join('');
+}
+
+// ─── Render Memorials ───
+
+function renderMemorials() {
   const memorials = loadMemorials();
   const grid = document.getElementById('memorials');
   const alerts = document.getElementById('alerts');
@@ -139,7 +198,7 @@ function render() {
 
   alerts.innerHTML = upcoming.map(u =>
     `<div class="alert">
-      <strong>${u.name}</strong> ${u.ritual} (${u.korean}) is ${u.days === 0 ? 'today' : `in ${u.days} day${u.days === 1 ? '' : 's'}`} (${u.date})
+      <strong>${escapeHTML(u.name)}</strong> ${u.ritual} (${u.korean}) is ${u.days === 0 ? 'today' : `in ${u.days} day${u.days === 1 ? '' : 's'}`} (${u.date})
     </div>`
   ).join('');
 
@@ -155,7 +214,7 @@ function render() {
 
   grid.innerHTML = memorials.map(m => {
     const photoHTML = m.photo
-      ? `<img class="card-photo" src="${m.photo}" alt="${m.name}">`
+      ? `<img class="card-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
       : `<div class="card-photo-placeholder">
            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8">
              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -189,6 +248,11 @@ function render() {
   }).join('');
 }
 
+function render() {
+  renderPrayers();
+  renderMemorials();
+}
+
 // ─── Detail View ───
 
 function showDetail(id) {
@@ -202,7 +266,7 @@ function showDetail(id) {
   const days = daysSinceDeath(m.deathDate);
 
   const photoHTML = m.photo
-    ? `<img class="detail-photo" src="${m.photo}" alt="${m.name}">`
+    ? `<img class="detail-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
     : '';
 
   const ritualItems = RITUALS.map(r => {
@@ -263,6 +327,8 @@ function escapeHTML(str) {
 // ─── Event Handlers ───
 
 function init() {
+  seedIfNeeded();
+
   const addBtn = document.getElementById('add-btn');
   const modal = document.getElementById('modal');
   const detailModal = document.getElementById('detail-modal');
@@ -274,6 +340,59 @@ function init() {
   const uploadPlaceholder = document.getElementById('upload-placeholder');
   const modalTitle = document.getElementById('modal-title');
 
+  // Prayer list
+  const addPrayerBtn = document.getElementById('add-prayer-btn');
+  const prayerForm = document.getElementById('prayer-form-container');
+  const prayerCancel = document.getElementById('prayer-cancel');
+  const prayerSave = document.getElementById('prayer-save');
+  const prayerCategory = document.getElementById('prayer-category');
+  const prayerDetail = document.getElementById('prayer-detail');
+
+  addPrayerBtn.addEventListener('click', () => {
+    prayerForm.classList.remove('hidden');
+    addPrayerBtn.classList.add('hidden');
+    prayerCategory.focus();
+  });
+
+  prayerCancel.addEventListener('click', () => {
+    prayerForm.classList.add('hidden');
+    addPrayerBtn.classList.remove('hidden');
+    prayerCategory.value = '';
+    prayerDetail.value = '';
+  });
+
+  prayerSave.addEventListener('click', () => {
+    const cat = prayerCategory.value.trim();
+    if (!cat) return;
+    const prayers = loadPrayers();
+    prayers.push({ id: generateId(), category: cat, detail: prayerDetail.value.trim() });
+    savePrayers(prayers);
+    prayerForm.classList.add('hidden');
+    addPrayerBtn.classList.remove('hidden');
+    prayerCategory.value = '';
+    prayerDetail.value = '';
+    renderPrayers();
+  });
+
+  // Prayer enter key
+  prayerDetail.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); prayerSave.click(); }
+  });
+  prayerCategory.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); prayerDetail.focus(); }
+  });
+
+  document.getElementById('prayer-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-prayer-delete]');
+    if (btn) {
+      const id = btn.dataset.prayerDelete;
+      const prayers = loadPrayers();
+      savePrayers(prayers.filter(p => p.id !== id));
+      renderPrayers();
+    }
+  });
+
+  // Memorial form
   let editingId = null;
 
   addBtn.addEventListener('click', () => {
@@ -307,7 +426,6 @@ function init() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      // Resize image to save localStorage space
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -359,7 +477,6 @@ function init() {
   });
 
   document.getElementById('memorials').addEventListener('click', (e) => {
-    // Delete button
     const deleteBtn = e.target.closest('[data-delete]');
     if (deleteBtn) {
       e.stopPropagation();
@@ -373,14 +490,12 @@ function init() {
       return;
     }
 
-    // Card click -> detail
     const card = e.target.closest('.memorial-card');
     if (card) {
       showDetail(card.dataset.id);
     }
   });
 
-  // Keyboard: Escape to close modals
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       modal.classList.add('hidden');

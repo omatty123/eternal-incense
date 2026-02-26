@@ -89,6 +89,149 @@ main {
   font-weight: 500;
 }
 
+/* ─── Section Headings ─── */
+
+.section-heading {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+.section-sub {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--text-dim);
+  margin-left: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ─── Prayer Section ─── */
+
+.prayer-section {
+  margin-bottom: 3rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.prayer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.prayer-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  border-left: 2px solid var(--gold);
+  position: relative;
+  group: prayer;
+}
+
+.prayer-item:hover .prayer-remove {
+  opacity: 1;
+}
+
+.prayer-category {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.prayer-detail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.prayer-remove {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+  padding: 0.2rem 0.4rem;
+}
+
+.prayer-remove:hover {
+  color: #e85d56;
+}
+
+.add-prayer-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  transition: color 0.2s;
+}
+
+.add-prayer-btn:hover {
+  color: var(--gold-soft);
+}
+
+.prayer-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.prayer-form.hidden {
+  display: none;
+}
+
+.prayer-form input {
+  padding: 0.45rem 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  outline: none;
+  flex: 1;
+  min-width: 150px;
+}
+
+.prayer-form input:focus {
+  border-color: var(--gold);
+}
+
+.prayer-form-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+}
+
+/* ─── Memorial Section ─── */
+
+.memorial-section {
+  margin-bottom: 2rem;
+}
+
 /* ─── Memorial Grid ─── */
 
 .memorial-grid {
