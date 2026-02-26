@@ -20,15 +20,17 @@ const RITUALS = [
 // These are baked into the code. They cannot be lost.
 
 const PERMANENT_MEMORIALS = [
-  { id: 'p-harry',   name: 'Harry Ceballos',         deathDate: '2023-12-01', photo: null },
-  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',   deathDate: '2024-04-04', photo: null },
-  { id: 'p-minnie',  name: 'Queen Minnie',           deathDate: '2024-08-26', photo: null },
-  { id: 'p-bodi',    name: 'Bodi',                   deathDate: '2025-04-28', photo: null },
-  { id: 'p-friday',  name: 'Friday',                 deathDate: '2025-06-13', photo: null },
-  { id: 'p-garth',   name: 'Garth Bond',             deathDate: '2025-07-09', photo: null },
-  { id: 'p-jean',    name: 'Jean Compan',            deathDate: '2025-08-19', photo: null },
-  { id: 'p-abdou',   name: 'Abdou Sarr',             deathDate: '2025-08-24', photo: null },
-  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',   deathDate: '2026-02-26', photo: null },
+  { id: 'p-dad',     name: 'Dad',                     deathDate: '2022-09-22', photo: 'images/dad.jpg' },
+  { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg' },
+  { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png' },
+  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null },
+  { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg' },
+  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: null },
+  { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null },
+  { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png' },
+  { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png' },
+  { id: 'p-abdou',   name: 'Abdou Sarr',              deathDate: '2025-08-24', photo: 'images/abdou.png' },
+  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: null },
 ];
 
 const PERMANENT_PRAYERS = [
