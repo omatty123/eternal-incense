@@ -3,11 +3,12 @@
    Memorial ritual calculator & incense shrine
    ═══════════════════════════════════════════ */
 
-const MEMORIAL_KEY = 'eternal-incense-memorials';
+const ADDED_KEY = 'eternal-incense-added';
+const HIDDEN_KEY = 'eternal-incense-hidden';
 const PRAYER_KEY = 'eternal-incense-prayers';
-const SEEDED_KEY = 'eternal-incense-seeded';
+const PRAYER_SEEDED_KEY = 'eternal-incense-prayers-seeded';
 
-// Death day counts as day 1, so 49재 = death + 48 days, 100재 = death + 99 days
+// Death day counts as day 1, so 49재 = death + 48 days, 백일 = death + 99 days
 const RITUALS = [
   { key: '49day',  label: '49th Day',  korean: '사십구재', days: 48 },
   { key: '100day', label: '100th Day', korean: '백일',     days: 99 },
@@ -15,54 +16,96 @@ const RITUALS = [
   { key: '3year',  label: '3 Years',   korean: '대상',     years: 3 },
 ];
 
-const SEED_MEMORIALS = [
-  { id: 'seed-1', name: 'Harry Ceballos',         deathDate: '2023-12-01', photo: null },
-  { id: 'seed-2', name: 'Mateo Chomsisengphet',   deathDate: '2024-04-04', photo: null },
-  { id: 'seed-3', name: 'Queen Minnie',           deathDate: '2024-08-26', photo: null },
-  { id: 'seed-4', name: 'Bodi',                   deathDate: '2025-04-28', photo: null },
-  { id: 'seed-5', name: 'Friday',                 deathDate: '2025-06-13', photo: null },
-  { id: 'seed-6', name: 'Garth Bond',             deathDate: '2025-07-09', photo: null },
-  { id: 'seed-7', name: 'Jean Compan',            deathDate: '2025-08-19', photo: null },
-  { id: 'seed-8', name: 'Abdou Sarr',             deathDate: '2025-08-24', photo: null },
-  { id: 'seed-9', name: 'Rhoda Howe Rasmussen',   deathDate: '2026-02-26', photo: null },
+// ─── Permanent Memorial Data ───
+// These are baked into the code. They cannot be lost.
+
+const PERMANENT_MEMORIALS = [
+  { id: 'p-harry',   name: 'Harry Ceballos',         deathDate: '2023-12-01', photo: null },
+  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',   deathDate: '2024-04-04', photo: null },
+  { id: 'p-minnie',  name: 'Queen Minnie',           deathDate: '2024-08-26', photo: null },
+  { id: 'p-bodi',    name: 'Bodi',                   deathDate: '2025-04-28', photo: null },
+  { id: 'p-friday',  name: 'Friday',                 deathDate: '2025-06-13', photo: null },
+  { id: 'p-garth',   name: 'Garth Bond',             deathDate: '2025-07-09', photo: null },
+  { id: 'p-jean',    name: 'Jean Compan',            deathDate: '2025-08-19', photo: null },
+  { id: 'p-abdou',   name: 'Abdou Sarr',             deathDate: '2025-08-24', photo: null },
+  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',   deathDate: '2026-02-26', photo: null },
 ];
 
-const SEED_PRAYERS = [
-  { id: 'prayer-1', category: 'Parents and especially sick parents', detail: "Mom's eyes" },
-  { id: 'prayer-2', category: 'Grieving Friends', detail: 'Sara, Magali' },
+const PERMANENT_PRAYERS = [
+  { id: 'pp-1', category: 'Parents and especially sick parents', detail: "Mom's eyes" },
+  { id: 'pp-2', category: 'Grieving Friends', detail: 'Sara, Magali' },
 ];
 
-// ─── Data ───
+// ─── Data Layer ───
+// Permanent entries always show unless explicitly hidden.
+// User-added entries live in localStorage alongside permanent ones.
 
-function loadMemorials() {
-  try {
-    return JSON.parse(localStorage.getItem(MEMORIAL_KEY)) || [];
-  } catch {
-    return [];
-  }
+function getHidden() {
+  try { return JSON.parse(localStorage.getItem(HIDDEN_KEY)) || []; }
+  catch { return []; }
 }
 
-function saveMemorials(memorials) {
-  localStorage.setItem(MEMORIAL_KEY, JSON.stringify(memorials));
+function setHidden(ids) {
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify(ids));
+}
+
+function getUserAdded() {
+  try { return JSON.parse(localStorage.getItem(ADDED_KEY)) || []; }
+  catch { return []; }
+}
+
+function setUserAdded(list) {
+  localStorage.setItem(ADDED_KEY, JSON.stringify(list));
+}
+
+function loadMemorials() {
+  const hidden = new Set(getHidden());
+  const permanent = PERMANENT_MEMORIALS.filter(m => !hidden.has(m.id));
+  const added = getUserAdded();
+  return [...permanent, ...added];
+}
+
+function addMemorial(memorial) {
+  const list = getUserAdded();
+  list.push(memorial);
+  setUserAdded(list);
+}
+
+function removeMemorial(id) {
+  // If it's a permanent memorial, hide it
+  if (PERMANENT_MEMORIALS.some(m => m.id === id)) {
+    const hidden = getHidden();
+    hidden.push(id);
+    setHidden(hidden);
+  } else {
+    // Remove from user-added
+    setUserAdded(getUserAdded().filter(m => m.id !== id));
+  }
 }
 
 function loadPrayers() {
-  try {
-    return JSON.parse(localStorage.getItem(PRAYER_KEY)) || [];
-  } catch {
-    return [];
+  // Seed permanent prayers once
+  if (!localStorage.getItem(PRAYER_SEEDED_KEY)) {
+    const existing = getPrayerStorage();
+    if (existing.length === 0) {
+      setPrayerStorage(PERMANENT_PRAYERS);
+    }
+    localStorage.setItem(PRAYER_SEEDED_KEY, '1');
   }
+  return getPrayerStorage();
 }
 
-function savePrayers(prayers) {
+function getPrayerStorage() {
+  try { return JSON.parse(localStorage.getItem(PRAYER_KEY)) || []; }
+  catch { return []; }
+}
+
+function setPrayerStorage(prayers) {
   localStorage.setItem(PRAYER_KEY, JSON.stringify(prayers));
 }
 
-function seedIfNeeded() {
-  if (localStorage.getItem(SEEDED_KEY)) return;
-  if (loadMemorials().length === 0) saveMemorials(SEED_MEMORIALS);
-  if (loadPrayers().length === 0) savePrayers(SEED_PRAYERS);
-  localStorage.setItem(SEEDED_KEY, '1');
+function savePrayers(prayers) {
+  setPrayerStorage(prayers);
 }
 
 function generateId() {
@@ -95,8 +138,7 @@ function daysBetween(a, b) {
 
 function daysSinceDeath(deathDate) {
   const d = new Date(deathDate + 'T00:00:00');
-  const now = new Date();
-  return daysBetween(d, now);
+  return daysBetween(d, new Date());
 }
 
 function formatDate(date) {
@@ -119,6 +161,111 @@ function getRitualStatus(ritualDate) {
   if (diff < 0) return 'past';
   if (diff <= 7) return 'imminent';
   return 'upcoming';
+}
+
+// ─── ICS Calendar Export ───
+
+function pad2(n) { return n.toString().padStart(2, '0'); }
+
+function icsDate(date) {
+  return `${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}`;
+}
+
+function icsNextDay(date) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + 1);
+  return icsDate(d);
+}
+
+function generateICS() {
+  const memorials = loadMemorials();
+  const now = new Date();
+  const events = [];
+
+  memorials.forEach(m => {
+    // Ritual dates
+    RITUALS.forEach(r => {
+      const rDate = getRitualDate(m.deathDate, r);
+      const diff = daysBetween(now, rDate);
+      if (diff >= 0) {
+        events.push({
+          summary: `${r.korean} — ${m.name}`,
+          description: `${r.label} memorial (${r.korean}) for ${m.name}.\\nPassing: ${m.deathDate}`,
+          date: rDate,
+          uid: `${m.id}-${r.key}@eternal-incense`,
+        });
+      }
+    });
+
+    // Annual memorial (기일) for next 10 years
+    const d = new Date(m.deathDate + 'T00:00:00');
+    for (let y = now.getFullYear(); y <= now.getFullYear() + 10; y++) {
+      const annual = new Date(y, d.getMonth(), d.getDate());
+      if (annual > now) {
+        events.push({
+          summary: `기일 — ${m.name}`,
+          description: `Annual memorial (기일) for ${m.name}.\\nPassing: ${m.deathDate}`,
+          date: annual,
+          uid: `${m.id}-annual-${y}@eternal-incense`,
+        });
+      }
+    }
+  });
+
+  let ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Eternal Incense//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:Eternal Incense — Memorial Rites',
+  ];
+
+  events.forEach(e => {
+    ics.push(
+      'BEGIN:VEVENT',
+      `UID:${e.uid}`,
+      `DTSTART;VALUE=DATE:${icsDate(e.date)}`,
+      `DTEND;VALUE=DATE:${icsNextDay(e.date)}`,
+      `SUMMARY:${e.summary}`,
+      `DESCRIPTION:${e.description}`,
+      // Reminder: 7 days before
+      'BEGIN:VALARM',
+      'TRIGGER:-P7D',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:7 days until ${e.summary}`,
+      'END:VALARM',
+      // Reminder: 1 day before
+      'BEGIN:VALARM',
+      'TRIGGER:-P1D',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:Tomorrow: ${e.summary}`,
+      'END:VALARM',
+      // Reminder: day of
+      'BEGIN:VALARM',
+      'TRIGGER:PT0S',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:Today: ${e.summary}`,
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  });
+
+  ics.push('END:VCALENDAR');
+  return ics.join('\r\n');
+}
+
+function downloadICS() {
+  const content = generateICS();
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'eternal-incense-rituals.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ─── Smoke HTML ───
@@ -177,7 +324,7 @@ function renderMemorials() {
   const grid = document.getElementById('memorials');
   const alerts = document.getElementById('alerts');
 
-  // Check for upcoming rituals
+  // Upcoming ritual alerts
   const upcoming = [];
   memorials.forEach(m => {
     RITUALS.forEach(r => {
@@ -185,13 +332,7 @@ function renderMemorials() {
       const status = getRitualStatus(rDate);
       if (status === 'imminent') {
         const diff = daysBetween(new Date(), rDate);
-        upcoming.push({
-          name: m.name,
-          ritual: r.label,
-          korean: r.korean,
-          date: formatDate(rDate),
-          days: diff
-        });
+        upcoming.push({ name: m.name, ritual: r.label, korean: r.korean, date: formatDate(rDate), days: diff });
       }
     });
   });
@@ -203,12 +344,7 @@ function renderMemorials() {
   ).join('');
 
   if (memorials.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <p>No memorials yet.</p>
-        <p>Add a loved one to begin their perpetual incense.</p>
-      </div>
-    `;
+    grid.innerHTML = `<div class="empty-state"><p>No memorials yet.</p><p>Add a loved one to begin their perpetual incense.</p></div>`;
     return;
   }
 
@@ -229,7 +365,6 @@ function renderMemorials() {
     }).join('');
 
     const d = new Date(m.deathDate + 'T00:00:00');
-    const dateStr = formatDate(d);
 
     return `
       <div class="memorial-card" data-id="${m.id}">
@@ -240,7 +375,7 @@ function renderMemorials() {
         <div class="card-body">
           ${createSmokeHTML(3)}
           <div class="card-name">${escapeHTML(m.name)}</div>
-          <div class="card-date">${dateStr}</div>
+          <div class="card-date">${formatDate(d)}</div>
           <div class="ritual-row">${ritualBadges}</div>
         </div>
       </div>
@@ -324,12 +459,27 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
-// ─── Event Handlers ───
+// ─── Init ───
 
 function init() {
-  seedIfNeeded();
+  // Migrate old localStorage format if present
+  const oldKey = 'eternal-incense-memorials';
+  const oldData = localStorage.getItem(oldKey);
+  if (oldData) {
+    try {
+      const old = JSON.parse(oldData);
+      // Move any non-seed entries to user-added
+      const seedIds = new Set(PERMANENT_MEMORIALS.map(m => m.id));
+      const oldSeedIds = new Set(old.filter(m => m.id.startsWith('seed-')).map(m => m.id));
+      const userEntries = old.filter(m => !m.id.startsWith('seed-') && !seedIds.has(m.id));
+      if (userEntries.length > 0) setUserAdded(userEntries);
+    } catch {}
+    localStorage.removeItem(oldKey);
+    localStorage.removeItem('eternal-incense-seeded');
+  }
 
   const addBtn = document.getElementById('add-btn');
+  const calBtn = document.getElementById('calendar-btn');
   const modal = document.getElementById('modal');
   const detailModal = document.getElementById('detail-modal');
   const form = document.getElementById('memorial-form');
@@ -374,7 +524,6 @@ function init() {
     renderPrayers();
   });
 
-  // Prayer enter key
   prayerDetail.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); prayerSave.click(); }
   });
@@ -386,17 +535,16 @@ function init() {
     const btn = e.target.closest('[data-prayer-delete]');
     if (btn) {
       const id = btn.dataset.prayerDelete;
-      const prayers = loadPrayers();
-      savePrayers(prayers.filter(p => p.id !== id));
+      savePrayers(loadPrayers().filter(p => p.id !== id));
       renderPrayers();
     }
   });
 
-  // Memorial form
-  let editingId = null;
+  // Calendar export
+  calBtn.addEventListener('click', downloadICS);
 
+  // Memorial form
   addBtn.addEventListener('click', () => {
-    editingId = null;
     modalTitle.textContent = 'Add a Loved One';
     form.reset();
     photoPreview.classList.add('hidden');
@@ -405,21 +553,10 @@ function init() {
     document.getElementById('input-name').focus();
   });
 
-  cancelBtn.addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
-
-  modal.querySelector('.modal-backdrop').addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
-
-  detailModal.querySelector('.modal-backdrop').addEventListener('click', () => {
-    detailModal.classList.add('hidden');
-  });
-
-  detailClose.addEventListener('click', () => {
-    detailModal.classList.add('hidden');
-  });
+  cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.querySelector('.modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
+  detailModal.querySelector('.modal-backdrop').addEventListener('click', () => detailModal.classList.add('hidden'));
+  detailClose.addEventListener('click', () => detailModal.classList.add('hidden'));
 
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -429,17 +566,14 @@ function init() {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxW = 600;
-        const maxH = 450;
-        let w = img.width;
-        let h = img.height;
+        const maxW = 600, maxH = 450;
+        let w = img.width, h = img.height;
         if (w > maxW) { h = h * maxW / w; w = maxW; }
         if (h > maxH) { w = w * maxH / h; h = maxH; }
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        photoPreview.src = dataUrl;
+        photoPreview.src = canvas.toDataURL('image/jpeg', 0.7);
         photoPreview.classList.remove('hidden');
         uploadPlaceholder.classList.add('hidden');
       };
@@ -455,20 +589,8 @@ function init() {
     if (!name || !deathDate) return;
 
     const photo = photoPreview.classList.contains('hidden') ? null : photoPreview.src;
-    const memorials = loadMemorials();
+    addMemorial({ id: generateId(), name, deathDate, photo });
 
-    if (editingId) {
-      const idx = memorials.findIndex(m => m.id === editingId);
-      if (idx !== -1) {
-        memorials[idx].name = name;
-        memorials[idx].deathDate = deathDate;
-        if (photo) memorials[idx].photo = photo;
-      }
-    } else {
-      memorials.push({ id: generateId(), name, deathDate, photo });
-    }
-
-    saveMemorials(memorials);
     modal.classList.add('hidden');
     form.reset();
     photoPreview.classList.add('hidden');
@@ -484,16 +606,13 @@ function init() {
       const memorials = loadMemorials();
       const m = memorials.find(x => x.id === id);
       if (m && confirm(`Remove memorial for ${m.name}?`)) {
-        saveMemorials(memorials.filter(x => x.id !== id));
+        removeMemorial(id);
         render();
       }
       return;
     }
-
     const card = e.target.closest('.memorial-card');
-    if (card) {
-      showDetail(card.dataset.id);
-    }
+    if (card) showDetail(card.dataset.id);
   });
 
   document.addEventListener('keydown', (e) => {
