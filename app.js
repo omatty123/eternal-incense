@@ -25,7 +25,7 @@ const PERMANENT_MEMORIALS = [
   { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png' },
   { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null },
   { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg' },
-  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: null },
+  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg' },
   { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null },
   { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png' },
   { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png' },
