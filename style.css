@@ -260,19 +260,6 @@ main {
 
 /* ─── Memorial Grid ─── */
 
-.group-heading {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-  margin-top: 2rem;
-}
-
-.group-heading:first-child {
-  margin-top: 0;
-}
-
 .memorial-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -311,79 +298,28 @@ main {
 }
 
 .card-photo-placeholder {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #1a1714 0%, #2a2520 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-dim);
+  display: none;
 }
 
-/* ─── Mourning Ribbon (근조 리본) ─── */
+/* ─── Photo Frame ─── */
 
-.mourning-ribbon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.mourning-ribbon::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  width: 7px;
-  height: 62%;
-  background: linear-gradient(180deg, #1a1a1a 0%, #111 60%, transparent 100%);
-  transform: translateX(-14px) rotate(20deg);
-  transform-origin: top center;
-}
-
-.mourning-ribbon::after {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  width: 7px;
-  height: 62%;
-  background: linear-gradient(180deg, #1a1a1a 0%, #111 60%, transparent 100%);
-  transform: translateX(7px) rotate(-20deg);
-  transform-origin: top center;
-}
-
-.ribbon-rosette {
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
-  background: radial-gradient(circle, #333 35%, #1a1a1a 36%, #1a1a1a 55%, #444 56%, #444 65%, transparent 66%);
-  border-radius: 50%;
-  z-index: 3;
-}
-
-/* Detail modal ribbon */
-.detail-photo-wrapper {
+.card-photo-wrapper {
   position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-photo {
+  border: 3px solid #111;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.detail-photo-wrapper {
   margin-bottom: 1.5rem;
 }
 
-.detail-photo-wrapper .mourning-ribbon::before,
-.detail-photo-wrapper .mourning-ribbon::after {
-  width: 9px;
-  height: 55%;
-}
-
-.detail-photo-wrapper .ribbon-rosette {
-  width: 20px;
-  height: 20px;
-  top: 6px;
+.detail-photo {
+  border: 3px solid #111;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .card-body {

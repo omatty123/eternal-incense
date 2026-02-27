@@ -358,19 +358,9 @@ function renderMemorials() {
 
   function renderCards(list) {
     return list.map(m => {
-      const photoInner = m.photo
-        ? `<img class="card-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
-        : `<div class="card-photo-placeholder">
-             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8">
-               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-               <circle cx="12" cy="7" r="4"></circle>
-             </svg>
-           </div>`;
-
+      const src = m.photo || 'images/chrysanthemum.jpg';
       const photoHTML = `<div class="card-photo-wrapper">
-        ${photoInner}
-        <div class="mourning-ribbon"></div>
-        <div class="ribbon-rosette"></div>
+        <img class="card-photo" src="${src}" alt="${escapeHTML(m.name)}">
       </div>`;
 
       const ritualBadges = RITUALS.map(r => {
@@ -398,16 +388,8 @@ function renderMemorials() {
     }).join('');
   }
 
-  let html = '';
-  if (people.length > 0) {
-    html += `<h3 class="group-heading">사람 <span class="section-sub">People</span></h3>`;
-    html += `<div class="memorial-grid">${renderCards(people)}</div>`;
-  }
-  if (pets.length > 0) {
-    html += `<h3 class="group-heading">동물 <span class="section-sub">Companions</span></h3>`;
-    html += `<div class="memorial-grid">${renderCards(pets)}</div>`;
-  }
-  grid.innerHTML = html;
+  document.getElementById('memorials-people').innerHTML = renderCards(people);
+  document.getElementById('memorials-pets').innerHTML = renderCards(pets);
 }
 
 function render() {
@@ -427,13 +409,10 @@ function showDetail(id) {
   const d = new Date(m.deathDate + 'T00:00:00');
   const days = daysSinceDeath(m.deathDate);
 
-  const photoHTML = m.photo
-    ? `<div class="detail-photo-wrapper">
-         <img class="detail-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">
-         <div class="mourning-ribbon"></div>
-         <div class="ribbon-rosette"></div>
-       </div>`
-    : '';
+  const detailSrc = m.photo || 'images/chrysanthemum.jpg';
+  const photoHTML = `<div class="detail-photo-wrapper">
+    <img class="detail-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
+  </div>`;
 
   const ritualItems = RITUALS.map(r => {
     const rDate = getRitualDate(m.deathDate, r);
@@ -629,7 +608,7 @@ function init() {
     render();
   });
 
-  document.getElementById('memorials').addEventListener('click', (e) => {
+  function handleCardClick(e) {
     const deleteBtn = e.target.closest('[data-delete]');
     if (deleteBtn) {
       e.stopPropagation();
@@ -644,7 +623,9 @@ function init() {
     }
     const card = e.target.closest('.memorial-card');
     if (card) showDetail(card.dataset.id);
-  });
+  }
+  document.getElementById('memorials-people').addEventListener('click', handleCardClick);
+  document.getElementById('memorials-pets').addEventListener('click', handleCardClick);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
