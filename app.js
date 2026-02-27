@@ -20,17 +20,19 @@ const RITUALS = [
 // These are baked into the code. They cannot be lost.
 
 const PERMANENT_MEMORIALS = [
-  { id: 'p-dad',     name: 'Dad',                     deathDate: '2022-09-22', photo: 'images/dad.jpg' },
-  { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg' },
-  { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png' },
-  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null },
-  { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg' },
-  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg' },
-  { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null },
-  { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png' },
-  { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png' },
-  { id: 'p-abdou',   name: 'Abdou Sarr',              deathDate: '2025-08-24', photo: 'images/abdou.png' },
-  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg' },
+  // People
+  { id: 'p-dad',     name: 'Dad',                     deathDate: '2022-09-22', photo: 'images/dad.jpg',    kind: 'person' },
+  { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg',   kind: 'person' },
+  { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png',  kind: 'person' },
+  { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png',   kind: 'person' },
+  { id: 'p-abdou',   name: 'Abdou Sarr',              deathDate: '2025-08-24', photo: 'images/abdou.png',  kind: 'person' },
+  // Pets
+  { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png',  kind: 'pet' },
+  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null,                kind: 'pet' },
+  { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
+  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
+  { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
+  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg',  kind: 'pet' },
 ];
 
 const PERMANENT_PRAYERS = [
@@ -295,6 +297,7 @@ function createSmokeHTML(stickCount = 3) {
   for (let i = 0; i < stickCount; i++) {
     html += '<div class="incense-stick"></div>';
   }
+  html += '<div class="incense-holder"><div class="holder-bowl"></div><div class="holder-base"></div></div>';
   html += '</div>';
   return html;
 }
@@ -350,39 +353,61 @@ function renderMemorials() {
     return;
   }
 
-  grid.innerHTML = memorials.map(m => {
-    const photoHTML = m.photo
-      ? `<img class="card-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
-      : `<div class="card-photo-placeholder">
-           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8">
-             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-             <circle cx="12" cy="7" r="4"></circle>
-           </svg>
-         </div>`;
+  const people = memorials.filter(m => m.kind !== 'pet');
+  const pets = memorials.filter(m => m.kind === 'pet');
 
-    const ritualBadges = RITUALS.map(r => {
-      const rDate = getRitualDate(m.deathDate, r);
-      const status = getRitualStatus(rDate);
-      return `<span class="ritual-badge ${status}">${r.label}</span>`;
+  function renderCards(list) {
+    return list.map(m => {
+      const photoInner = m.photo
+        ? `<img class="card-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
+        : `<div class="card-photo-placeholder">
+             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8">
+               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+               <circle cx="12" cy="7" r="4"></circle>
+             </svg>
+           </div>`;
+
+      const photoHTML = `<div class="card-photo-wrapper">
+        ${photoInner}
+        <div class="mourning-ribbon"></div>
+        <div class="ribbon-rosette"></div>
+      </div>`;
+
+      const ritualBadges = RITUALS.map(r => {
+        const rDate = getRitualDate(m.deathDate, r);
+        const status = getRitualStatus(rDate);
+        return `<span class="ritual-badge ${status}">${r.label}</span>`;
+      }).join('');
+
+      const d = new Date(m.deathDate + 'T00:00:00');
+
+      return `
+        <div class="memorial-card" data-id="${m.id}">
+          <div class="card-actions">
+            <button class="btn-delete" data-delete="${m.id}" title="Remove memorial">&times;</button>
+          </div>
+          ${photoHTML}
+          <div class="card-body">
+            ${createSmokeHTML(3)}
+            <div class="card-name">${escapeHTML(m.name)}</div>
+            <div class="card-date">${formatDate(d)}</div>
+            <div class="ritual-row">${ritualBadges}</div>
+          </div>
+        </div>
+      `;
     }).join('');
+  }
 
-    const d = new Date(m.deathDate + 'T00:00:00');
-
-    return `
-      <div class="memorial-card" data-id="${m.id}">
-        <div class="card-actions">
-          <button class="btn-delete" data-delete="${m.id}" title="Remove memorial">&times;</button>
-        </div>
-        ${photoHTML}
-        <div class="card-body">
-          ${createSmokeHTML(3)}
-          <div class="card-name">${escapeHTML(m.name)}</div>
-          <div class="card-date">${formatDate(d)}</div>
-          <div class="ritual-row">${ritualBadges}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  let html = '';
+  if (people.length > 0) {
+    html += `<h3 class="group-heading">사람 <span class="section-sub">People</span></h3>`;
+    html += `<div class="memorial-grid">${renderCards(people)}</div>`;
+  }
+  if (pets.length > 0) {
+    html += `<h3 class="group-heading">동물 <span class="section-sub">Companions</span></h3>`;
+    html += `<div class="memorial-grid">${renderCards(pets)}</div>`;
+  }
+  grid.innerHTML = html;
 }
 
 function render() {
@@ -403,7 +428,11 @@ function showDetail(id) {
   const days = daysSinceDeath(m.deathDate);
 
   const photoHTML = m.photo
-    ? `<img class="detail-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">`
+    ? `<div class="detail-photo-wrapper">
+         <img class="detail-photo" src="${m.photo}" alt="${escapeHTML(m.name)}">
+         <div class="mourning-ribbon"></div>
+         <div class="ribbon-rosette"></div>
+       </div>`
     : '';
 
   const ritualItems = RITUALS.map(r => {

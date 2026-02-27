@@ -260,6 +260,19 @@ main {
 
 /* ─── Memorial Grid ─── */
 
+.group-heading {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+.group-heading:first-child {
+  margin-top: 0;
+}
+
 .memorial-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -284,6 +297,11 @@ main {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+.card-photo-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
 .card-photo {
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -300,6 +318,72 @@ main {
   align-items: center;
   justify-content: center;
   color: var(--text-dim);
+}
+
+/* ─── Mourning Ribbon (근조 리본) ─── */
+
+.mourning-ribbon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mourning-ribbon::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 62%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #111 60%, transparent 100%);
+  transform: translateX(-14px) rotate(20deg);
+  transform-origin: top center;
+}
+
+.mourning-ribbon::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 62%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #111 60%, transparent 100%);
+  transform: translateX(7px) rotate(-20deg);
+  transform-origin: top center;
+}
+
+.ribbon-rosette {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle, #333 35%, #1a1a1a 36%, #1a1a1a 55%, #444 56%, #444 65%, transparent 66%);
+  border-radius: 50%;
+  z-index: 3;
+}
+
+/* Detail modal ribbon */
+.detail-photo-wrapper {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.detail-photo-wrapper .mourning-ribbon::before,
+.detail-photo-wrapper .mourning-ribbon::after {
+  width: 9px;
+  height: 55%;
+}
+
+.detail-photo-wrapper .ribbon-rosette {
+  width: 20px;
+  height: 20px;
+  top: 6px;
 }
 
 .card-body {
@@ -326,9 +410,61 @@ main {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 80px;
+  height: 90px;
   position: relative;
   margin-bottom: 0.5rem;
+}
+
+.incense-holder {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Bowl */
+.holder-bowl {
+  width: 44px;
+  height: 18px;
+  background: linear-gradient(180deg, #5c5040 0%, #3d352a 100%);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  position: relative;
+}
+
+/* Rim */
+.holder-bowl::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -3px;
+  right: -3px;
+  height: 5px;
+  background: linear-gradient(180deg, #7a6e5c 0%, #5c5040 100%);
+  border-radius: 3px;
+}
+
+/* Ash bed inside bowl */
+.holder-bowl::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  right: 6px;
+  height: 6px;
+  background: radial-gradient(ellipse, #8a8278 0%, #6b6358 100%);
+  border-radius: 50%;
+}
+
+/* Base/foot */
+.holder-base {
+  width: 30px;
+  height: 4px;
+  background: linear-gradient(180deg, #3d352a 0%, #2a241e 100%);
+  border-radius: 0 0 2px 2px;
+  margin-top: -1px;
 }
 
 .incense-stick {
@@ -336,8 +472,9 @@ main {
   height: 40px;
   background: linear-gradient(to top, #8B7355, #a08060);
   position: relative;
-  margin: 0 8px;
+  margin: 0 5px;
   border-radius: 1px;
+  z-index: 1;
 }
 
 .incense-stick::before {
@@ -701,7 +838,7 @@ main {
   max-height: 300px;
   object-fit: cover;
   border-radius: 4px;
-  margin-bottom: 1.5rem;
+  display: block;
   filter: grayscale(0.1) brightness(0.92);
 }
 
