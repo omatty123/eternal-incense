@@ -342,11 +342,26 @@ main {
   margin-bottom: 1rem;
 }
 
-.family-others {
-  font-size: 0.75rem;
+.family-members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.family-member {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.family-member::before {
+  content: '\2740';
+  margin-right: 0.45rem;
   color: var(--text-dim);
-  margin-top: 0.6rem;
-  font-style: italic;
+  font-size: 0.85rem;
 }
 
 /* ─── Incense ─── */

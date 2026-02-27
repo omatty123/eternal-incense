@@ -20,24 +20,24 @@ const RITUALS = [
 // These are baked into the code. They cannot be lost.
 
 const PERMANENT_MEMORIALS = [
-  // People
-  { id: 'p-adam-shannon', name: 'Adam & Shannon',      deathDate: '2015-12-26', photo: 'images/adam-shannon.png', kind: 'person' },
-  { id: 'p-duke',    name: 'Duke Howe',                deathDate: '2017-04-11', photo: 'images/duke.jpg',   kind: 'person' },
-  { id: 'p-dad',     name: 'Dad',                      deathDate: '2022-09-22', photo: 'images/dad.jpg',    kind: 'person' },
-  { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg',   kind: 'person' },
-  { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png',  kind: 'person' },
-  { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png',   kind: 'person' },
+  // People — most recent first
   { id: 'p-abdou',   name: 'Abdou Sarr',              deathDate: '2025-08-24', photo: 'images/abdou.png',  kind: 'person' },
-  // Pets
-  { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png',  kind: 'pet' },
+  { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png',   kind: 'person' },
+  { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png',  kind: 'person' },
+  { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg',   kind: 'person' },
+  { id: 'p-dad',     name: 'Dad',                      deathDate: '2022-09-22', photo: 'images/dad.jpg',    kind: 'person' },
+  { id: 'p-duke',    name: 'Duke Howe',                deathDate: '2017-04-11', photo: 'images/duke.jpg',   kind: 'person' },
+  { id: 'p-adam-shannon', name: 'Adam & Shannon',      deathDate: '2015-12-26', photo: 'images/adam-shannon.png', kind: 'person' },
+  // Pets — most recent first
+  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg',  kind: 'pet' },
+  { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
+  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
+  { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
   { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null,                kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-bebe',    name: 'Bebe Chomsisengphet',    deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-louis',   name: 'Louis Chomsisengphet',   deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-lola',    name: 'Lola Chomsisengphet',    deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
-  { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
-  { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
-  { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
-  { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg',  kind: 'pet' },
+  { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png',  kind: 'pet' },
 ];
 
 const PERMANENT_PRAYERS = [
@@ -438,7 +438,10 @@ function renderMemorials() {
         }).join('')}</div>`;
       }
 
-      const otherNames = others.map(m => escapeHTML(m.name.split(' ')[0])).join(', ');
+      const otherNamesHTML = others.map(m => {
+        const first = escapeHTML(m.name.split(' ')[0]);
+        return `<span class="family-member">${first}</span>`;
+      }).join('');
 
       html += `
         <div class="memorial-card family-card" data-id="${lead.id}">
@@ -453,7 +456,7 @@ function renderMemorials() {
             <div class="card-name">${escapeHTML(lead.name)}</div>
             ${dateHTML}
             ${ritualHTML}
-            <div class="family-others">${otherNames}</div>
+            <div class="family-members">${otherNamesHTML}</div>
           </div>
         </div>
       `;
