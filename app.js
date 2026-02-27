@@ -276,6 +276,8 @@ function downloadICS() {
 
 function createSmokeHTML(stickCount = 3) {
   let html = '<div class="incense-container">';
+
+  // Smoke
   html += '<div class="smoke-container">';
   for (let i = 0; i < 8; i++) {
     const duration = 3 + Math.random() * 3;
@@ -294,9 +296,15 @@ function createSmokeHTML(stickCount = 3) {
     "></div>`;
   }
   html += '</div>';
+
+  // Sticks
+  html += '<div class="incense-sticks">';
   for (let i = 0; i < stickCount; i++) {
     html += '<div class="incense-stick"></div>';
   }
+  html += '</div>';
+
+  // Holder
   html += '<div class="incense-holder"><div class="holder-bowl"></div><div class="holder-base"></div></div>';
   html += '</div>';
   return html;
