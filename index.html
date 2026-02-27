@@ -11,35 +11,38 @@
 </head>
 <body>
   <header>
-    <h1>Eternal Incense</h1>
-    <p class="subtitle">영원한 향</p>
-    <button id="calendar-btn" class="calendar-btn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-      Add to Calendar
-    </button>
+    <div class="header-inner">
+      <div class="header-title">
+        <h1>Eternal Incense</h1>
+        <p class="subtitle">영원한 향</p>
+        <button id="calendar-btn" class="calendar-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Add to Calendar
+        </button>
+      </div>
+      <section class="prayer-niche">
+        <h3 class="prayer-heading">기도표</h3>
+        <div id="prayer-list" class="prayer-list"></div>
+        <button id="add-prayer-btn" class="add-prayer-btn">+</button>
+        <div id="prayer-form-container" class="prayer-form hidden">
+          <input type="text" id="prayer-category" placeholder="Category">
+          <input type="text" id="prayer-detail" placeholder="Detail">
+          <div class="prayer-form-actions">
+            <button id="prayer-cancel" class="btn-secondary btn-sm">Cancel</button>
+            <button id="prayer-save" class="btn-primary btn-sm">Add</button>
+          </div>
+        </div>
+      </section>
+    </div>
   </header>
 
   <main>
     <section id="alerts"></section>
-
-    <section class="prayer-section">
-      <h3 class="prayer-heading">기도표</h3>
-      <div id="prayer-list" class="prayer-list"></div>
-      <button id="add-prayer-btn" class="add-prayer-btn">+</button>
-      <div id="prayer-form-container" class="prayer-form hidden">
-        <input type="text" id="prayer-category" placeholder="Category">
-        <input type="text" id="prayer-detail" placeholder="Detail">
-        <div class="prayer-form-actions">
-          <button id="prayer-cancel" class="btn-secondary btn-sm">Cancel</button>
-          <button id="prayer-save" class="btn-primary btn-sm">Add</button>
-        </div>
-      </div>
-    </section>
 
     <section class="memorial-section">
       <h2 class="section-heading">사람 <span class="section-sub">People</span></h2>

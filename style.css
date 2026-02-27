@@ -45,6 +45,17 @@ header {
   margin: 0 auto;
 }
 
+.header-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.header-title {
+  flex-shrink: 0;
+}
+
 header h1 {
   font-family: var(--font-serif);
   font-weight: 400;
@@ -136,15 +147,15 @@ main {
   text-transform: uppercase;
 }
 
-/* ─── Prayer Section ─── */
+/* ─── Prayer Niche ─── */
 
-.prayer-section {
-  max-width: 340px;
+.prayer-niche {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.8rem 1rem;
-  margin-bottom: 2.5rem;
+  width: 280px;
+  flex-shrink: 0;
 }
 
 .prayer-heading {
@@ -244,7 +255,7 @@ main {
   font-size: 0.8rem;
   outline: none;
   flex: 1;
-  min-width: 150px;
+  min-width: 80px;
 }
 
 .prayer-form input:focus {
@@ -1064,6 +1075,15 @@ main {
 @media (max-width: 600px) {
   header {
     padding: 2rem 1.25rem 1rem;
+  }
+
+  .header-inner {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .prayer-niche {
+    width: 100%;
   }
 
   main {
