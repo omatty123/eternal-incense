@@ -21,14 +21,19 @@ const RITUALS = [
 
 const PERMANENT_MEMORIALS = [
   // People
-  { id: 'p-dad',     name: 'Dad',                     deathDate: '2022-09-22', photo: 'images/dad.jpg',    kind: 'person' },
+  { id: 'p-adam-shannon', name: 'Adam & Shannon',      deathDate: '2015-12-26', photo: 'images/adam-shannon.png', kind: 'person' },
+  { id: 'p-duke',    name: 'Duke Howe',                deathDate: '2017-04-11', photo: 'images/duke.jpg',   kind: 'person' },
+  { id: 'p-dad',     name: 'Dad',                      deathDate: '2022-09-22', photo: 'images/dad.jpg',    kind: 'person' },
   { id: 'p-mark',    name: 'Mark',                    deathDate: '2023-06-01', photo: 'images/mark.jpg',   kind: 'person' },
   { id: 'p-garth',   name: 'Garth Bond',              deathDate: '2025-07-09', photo: 'images/garth.png',  kind: 'person' },
   { id: 'p-jean',    name: 'Jean Compan',             deathDate: '2025-08-19', photo: 'images/jean.png',   kind: 'person' },
   { id: 'p-abdou',   name: 'Abdou Sarr',              deathDate: '2025-08-24', photo: 'images/abdou.png',  kind: 'person' },
   // Pets
   { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png',  kind: 'pet' },
-  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null,                kind: 'pet' },
+  { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null,                kind: 'pet', family: 'Chomsisengphet' },
+  { id: 'p-bebe',    name: 'Bebe Chomsisengphet',    deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
+  { id: 'p-louis',   name: 'Louis Chomsisengphet',   deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
+  { id: 'p-lola',    name: 'Lola Chomsisengphet',    deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
   { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
   { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
@@ -340,6 +345,7 @@ function renderMemorials() {
   // Upcoming ritual alerts
   const upcoming = [];
   memorials.forEach(m => {
+    if (!m.deathDate) return;
     RITUALS.forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const status = getRitualStatus(rDate);
@@ -364,40 +370,99 @@ function renderMemorials() {
   const people = memorials.filter(m => m.kind !== 'pet');
   const pets = memorials.filter(m => m.kind === 'pet');
 
-  function renderCards(list) {
-    return list.map(m => {
-      const src = m.photo || 'images/chrysanthemum.jpg';
-      const photoHTML = `<div class="card-photo-wrapper">
-        <img class="card-photo" src="${src}" alt="${escapeHTML(m.name)}">
-      </div>`;
+  function renderCard(m) {
+    const src = m.photo || 'images/chrysanthemum.jpg';
+    const photoHTML = `<div class="card-photo-wrapper">
+      <img class="card-photo" src="${src}" alt="${escapeHTML(m.name)}">
+    </div>`;
 
-      const ritualBadges = RITUALS.map(r => {
+    let dateHTML = '';
+    let ritualHTML = '';
+    if (m.deathDate) {
+      const d = new Date(m.deathDate + 'T00:00:00');
+      dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
+      ritualHTML = `<div class="ritual-row">${RITUALS.map(r => {
         const rDate = getRitualDate(m.deathDate, r);
         const status = getRitualStatus(rDate);
         return `<span class="ritual-badge ${status}">${r.label}</span>`;
-      }).join('');
+      }).join('')}</div>`;
+    }
 
-      const d = new Date(m.deathDate + 'T00:00:00');
+    return `
+      <div class="memorial-card" data-id="${m.id}">
+        <div class="card-actions">
+          <button class="btn-delete" data-delete="${m.id}" title="Remove memorial">&times;</button>
+        </div>
+        ${photoHTML}
+        <div class="card-body">
+          ${createSmokeHTML(3)}
+          <div class="card-name">${escapeHTML(m.name)}</div>
+          ${dateHTML}
+          ${ritualHTML}
+        </div>
+      </div>
+    `;
+  }
 
-      return `
-        <div class="memorial-card" data-id="${m.id}">
+  // Group pets by family
+  function renderPetCards(list) {
+    const families = {};
+    const solo = [];
+    list.forEach(m => {
+      if (m.family) {
+        if (!families[m.family]) families[m.family] = [];
+        families[m.family].push(m);
+      } else {
+        solo.push(m);
+      }
+    });
+
+    let html = '';
+    // Solo pets first
+    solo.forEach(m => { html += renderCard(m); });
+    // Family groups
+    Object.entries(families).forEach(([family, members]) => {
+      const lead = members.find(m => m.deathDate) || members[0];
+      const others = members.filter(m => m !== lead);
+      const src = lead.photo || 'images/chrysanthemum.jpg';
+
+      let dateHTML = '';
+      let ritualHTML = '';
+      if (lead.deathDate) {
+        const d = new Date(lead.deathDate + 'T00:00:00');
+        dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
+        ritualHTML = `<div class="ritual-row">${RITUALS.map(r => {
+          const rDate = getRitualDate(lead.deathDate, r);
+          const status = getRitualStatus(rDate);
+          return `<span class="ritual-badge ${status}">${r.label}</span>`;
+        }).join('')}</div>`;
+      }
+
+      const otherNames = others.map(m => escapeHTML(m.name.split(' ')[0])).join(', ');
+
+      html += `
+        <div class="memorial-card family-card" data-id="${lead.id}">
           <div class="card-actions">
-            <button class="btn-delete" data-delete="${m.id}" title="Remove memorial">&times;</button>
+            <button class="btn-delete" data-delete="${lead.id}" title="Remove memorial">&times;</button>
           </div>
-          ${photoHTML}
+          <div class="card-photo-wrapper">
+            <img class="card-photo" src="${src}" alt="${escapeHTML(family)} family">
+          </div>
           <div class="card-body">
             ${createSmokeHTML(3)}
-            <div class="card-name">${escapeHTML(m.name)}</div>
-            <div class="card-date">${formatDate(d)}</div>
-            <div class="ritual-row">${ritualBadges}</div>
+            <div class="card-name">${escapeHTML(lead.name)}</div>
+            ${dateHTML}
+            ${ritualHTML}
+            <div class="family-others">${otherNames}</div>
           </div>
         </div>
       `;
-    }).join('');
+    });
+    return html;
   }
 
-  document.getElementById('memorials-people').innerHTML = renderCards(people);
-  document.getElementById('memorials-pets').innerHTML = renderCards(pets);
+  document.getElementById('memorials-people').innerHTML = people.map(m => renderCard(m)).join('');
+  document.getElementById('memorials-pets').innerHTML = renderPetCards(pets);
 }
 
 function render() {
@@ -414,13 +479,24 @@ function showDetail(id) {
 
   const modal = document.getElementById('detail-modal');
   const body = document.getElementById('detail-body');
-  const d = new Date(m.deathDate + 'T00:00:00');
-  const days = daysSinceDeath(m.deathDate);
 
   const detailSrc = m.photo || 'images/chrysanthemum.jpg';
   const photoHTML = `<div class="detail-photo-wrapper">
     <img class="detail-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
   </div>`;
+
+  if (!m.deathDate) {
+    body.innerHTML = `
+      ${photoHTML}
+      <div class="detail-name">${escapeHTML(m.name)}</div>
+      <div class="detail-incense">${createSmokeHTML(5)}</div>
+    `;
+    modal.classList.remove('hidden');
+    return;
+  }
+
+  const d = new Date(m.deathDate + 'T00:00:00');
+  const days = daysSinceDeath(m.deathDate);
 
   const ritualItems = RITUALS.map(r => {
     const rDate = getRitualDate(m.deathDate, r);
