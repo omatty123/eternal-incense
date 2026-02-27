@@ -315,6 +315,27 @@ function createSmokeHTML(stickCount = 3) {
   return html;
 }
 
+function createMiniIncenseHTML() {
+  let html = '<div class="mini-incense">';
+  // Mini smoke
+  for (let i = 0; i < 3; i++) {
+    const duration = 2.5 + Math.random() * 2;
+    const delay = Math.random() * 2;
+    const drift1 = (Math.random() - 0.5) * 6;
+    const drift2 = (Math.random() - 0.5) * 5;
+    html += `<div class="mini-smoke" style="
+      --duration: ${duration}s;
+      --delay: ${delay}s;
+      --drift1: ${drift1}px;
+      --drift2: ${drift2}px;
+    "></div>`;
+  }
+  html += '<div class="mini-stick"></div>';
+  html += '<div class="mini-bowl"></div>';
+  html += '</div>';
+  return html;
+}
+
 // ─── Render Prayers ───
 
 function renderPrayers() {
@@ -440,7 +461,10 @@ function renderMemorials() {
 
       const otherNamesHTML = others.map(m => {
         const first = escapeHTML(m.name.split(' ')[0]);
-        return `<span class="family-member">${first}</span>`;
+        return `<div class="family-member">
+          <span class="family-member-name">${first}</span>
+          ${createMiniIncenseHTML()}
+        </div>`;
       }).join('');
 
       html += `
