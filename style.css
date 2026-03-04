@@ -106,81 +106,77 @@ main {
   padding: 0 2rem 4rem;
 }
 
-/* ─── Next Ceremony ─── */
+/* ─── Next Ceremonies ─── */
 
 #next-ceremony:empty {
   display: none;
 }
 
-.next-ceremony-banner {
-  background: linear-gradient(135deg, rgba(184, 150, 11, 0.12) 0%, rgba(184, 150, 11, 0.05) 100%);
-  border: 1px solid rgba(184, 150, 11, 0.2);
-  border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
+.next-ceremony-list {
   margin-bottom: 1.5rem;
+}
+
+.next-ceremony-heading {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.next-ceremony-row {
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: background 0.15s;
+  font-size: 0.8rem;
 }
 
-.next-ceremony-banner:hover {
-  border-color: rgba(184, 150, 11, 0.4);
-  background: linear-gradient(135deg, rgba(184, 150, 11, 0.18) 0%, rgba(184, 150, 11, 0.08) 100%);
-}
-
-.next-ceremony-countdown {
-  text-align: center;
-  min-width: 60px;
-  flex-shrink: 0;
+.next-ceremony-row:hover {
+  background: rgba(184, 150, 11, 0.08);
 }
 
 .next-ceremony-days {
   font-family: var(--font-serif);
-  font-size: 2rem;
+  font-size: 0.85rem;
   font-weight: 400;
   color: var(--gold);
-  line-height: 1;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
-.next-ceremony-days-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.15rem;
-}
-
-.next-ceremony-info {
-  flex: 1;
-}
-
-.next-ceremony-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.25rem;
-}
-
-.next-ceremony-name {
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
+.next-ceremony-detail {
   color: var(--text);
   font-weight: 400;
+  white-space: nowrap;
+}
+
+.next-ceremony-korean {
+  color: var(--text-dim);
+  font-size: 0.75rem;
 }
 
 .next-ceremony-for {
-  font-size: 0.85rem;
   color: var(--text-muted);
-  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  flex: 1;
 }
 
 .next-ceremony-date {
-  font-size: 0.8rem;
-  color: var(--gold-soft);
-  margin-top: 0.25rem;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .next-ceremony-date {
+    display: none;
+  }
 }
 
 /* ─── Alerts ─── */

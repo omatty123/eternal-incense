@@ -496,50 +496,48 @@ function renderNextCeremony() {
   const container = document.getElementById('next-ceremony');
   const memorials = loadMemorials();
   const now = new Date();
-  let nearest = null;
+  var upcoming = [];
 
   memorials.forEach(m => {
     if (!m.deathDate) return;
 
-    // Check ritual dates
     RITUALS.forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const diff = daysBetween(now, rDate);
-      if (diff >= 0 && (!nearest || diff < nearest.diff)) {
-        nearest = { diff, date: rDate, label: r.label, korean: r.korean, name: m.name, id: m.id };
+      if (diff >= 0) {
+        upcoming.push({ diff, date: rDate, label: r.label, korean: r.korean, name: m.name, id: m.id });
       }
     });
 
-    // Check annual memorial
     const annual = getNextAnnualMemorial(m.deathDate);
     const annualDiff = daysBetween(now, annual);
-    if (annualDiff >= 0 && (!nearest || annualDiff < nearest.diff)) {
-      nearest = { diff: annualDiff, date: annual, label: 'Annual Memorial', korean: '기일', name: m.name, id: m.id };
+    if (annualDiff >= 0) {
+      upcoming.push({ diff: annualDiff, date: annual, label: 'Annual Memorial', korean: '기일', name: m.name, id: m.id });
     }
   });
 
-  if (!nearest) { container.innerHTML = ''; return; }
+  upcoming.sort((a, b) => a.diff - b.diff);
+  upcoming = upcoming.slice(0, 5);
 
-  const daysText = nearest.diff === 0 ? 'TODAY' : nearest.diff;
-  const daysLabel = nearest.diff === 0 ? '' : nearest.diff === 1 ? 'day' : 'days';
+  if (!upcoming.length) { container.innerHTML = ''; return; }
 
   container.innerHTML = `
-    <div class="next-ceremony-banner" data-id="${nearest.id}">
-      <div class="next-ceremony-countdown">
-        <div class="next-ceremony-days">${daysText}</div>
-        ${daysLabel ? `<div class="next-ceremony-days-label">${daysLabel}</div>` : ''}
-      </div>
-      <div class="next-ceremony-info">
-        <div class="next-ceremony-label">Next Ceremony</div>
-        <div class="next-ceremony-name">${escapeHTML(nearest.label)} <span style="color:var(--text-dim)">${nearest.korean}</span></div>
-        <div class="next-ceremony-for">${escapeHTML(nearest.name)}</div>
-        <div class="next-ceremony-date">${formatDate(nearest.date)}</div>
-      </div>
+    <div class="next-ceremony-list">
+      <div class="next-ceremony-heading">Upcoming Ceremonies</div>
+      ${upcoming.map(c => {
+        const daysText = c.diff === 0 ? 'Today' : c.diff + 'd';
+        return `<div class="next-ceremony-row" data-id="${c.id}">
+          <span class="next-ceremony-days">${daysText}</span>
+          <span class="next-ceremony-detail">${escapeHTML(c.label)} <span class="next-ceremony-korean">${c.korean}</span></span>
+          <span class="next-ceremony-for">${escapeHTML(c.name)}</span>
+          <span class="next-ceremony-date">${formatDate(c.date)}</span>
+        </div>`;
+      }).join('')}
     </div>
   `;
 
-  container.querySelector('.next-ceremony-banner').addEventListener('click', () => {
-    showDetail(nearest.id);
+  container.querySelectorAll('.next-ceremony-row').forEach(row => {
+    row.addEventListener('click', () => showDetail(row.dataset.id));
   });
 }
 
