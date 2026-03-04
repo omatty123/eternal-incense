@@ -492,7 +492,59 @@ function renderMemorials() {
   document.getElementById('memorials-pets').innerHTML = renderPetCards(pets);
 }
 
+function renderNextCeremony() {
+  const container = document.getElementById('next-ceremony');
+  const memorials = loadMemorials();
+  const now = new Date();
+  let nearest = null;
+
+  memorials.forEach(m => {
+    if (!m.deathDate) return;
+
+    // Check ritual dates
+    RITUALS.forEach(r => {
+      const rDate = getRitualDate(m.deathDate, r);
+      const diff = daysBetween(now, rDate);
+      if (diff >= 0 && (!nearest || diff < nearest.diff)) {
+        nearest = { diff, date: rDate, label: r.label, korean: r.korean, name: m.name, id: m.id };
+      }
+    });
+
+    // Check annual memorial
+    const annual = getNextAnnualMemorial(m.deathDate);
+    const annualDiff = daysBetween(now, annual);
+    if (annualDiff >= 0 && (!nearest || annualDiff < nearest.diff)) {
+      nearest = { diff: annualDiff, date: annual, label: 'Annual Memorial', korean: '기일', name: m.name, id: m.id };
+    }
+  });
+
+  if (!nearest) { container.innerHTML = ''; return; }
+
+  const daysText = nearest.diff === 0 ? 'TODAY' : nearest.diff;
+  const daysLabel = nearest.diff === 0 ? '' : nearest.diff === 1 ? 'day' : 'days';
+
+  container.innerHTML = `
+    <div class="next-ceremony-banner" data-id="${nearest.id}">
+      <div class="next-ceremony-countdown">
+        <div class="next-ceremony-days">${daysText}</div>
+        ${daysLabel ? `<div class="next-ceremony-days-label">${daysLabel}</div>` : ''}
+      </div>
+      <div class="next-ceremony-info">
+        <div class="next-ceremony-label">Next Ceremony</div>
+        <div class="next-ceremony-name">${escapeHTML(nearest.label)} <span style="color:var(--text-dim)">${nearest.korean}</span></div>
+        <div class="next-ceremony-for">${escapeHTML(nearest.name)}</div>
+        <div class="next-ceremony-date">${formatDate(nearest.date)}</div>
+      </div>
+    </div>
+  `;
+
+  container.querySelector('.next-ceremony-banner').addEventListener('click', () => {
+    showDetail(nearest.id);
+  });
+}
+
 function render() {
+  renderNextCeremony();
   renderPrayers();
   renderMemorials();
 }
