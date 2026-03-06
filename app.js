@@ -826,10 +826,10 @@ function renderDetailPage(id) {
     </div>
     <button class="dp-nav dp-nav-prev" id="dp-prev" aria-label="Previous">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      <span class="dp-nav-name">${prev ? escapeHTML(prev.name.split(' ')[0]) : ''}</span>
+      <span class="dp-nav-name">${prev ? escapeHTML(prev.name) : ''}</span>
     </button>
     <button class="dp-nav dp-nav-next" id="dp-next" aria-label="Next">
-      <span class="dp-nav-name">${next ? escapeHTML(next.name.split(' ')[0]) : ''}</span>
+      <span class="dp-nav-name">${next ? escapeHTML(next.name) : ''}</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 6 15 12 9 18"></polyline></svg>
     </button>
   `;
