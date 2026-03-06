@@ -98,7 +98,7 @@ const PERMANENT_MEMORIALS = [
   { id: 'p-mateo',   name: 'Mateo Chomsisengphet',    deathDate: '2024-04-04', photo: null,                kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-bebe',    name: 'Bebe Chomsisengphet',    deathDate: null,         photo: 'images/bebe.jpg',   kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-louis',   name: 'Louis Chomsisengphet',   deathDate: null,         photo: 'images/louis.jpg',  kind: 'pet', family: 'Chomsisengphet' },
-  { id: 'p-lola',    name: 'Lola Chomsisengphet',    deathDate: null,         photo: null,                kind: 'pet', family: 'Chomsisengphet' },
+  { id: 'p-lola',    name: 'Lola Chomsisengphet',    deathDate: null,         photo: 'images/lola.png',   kind: 'pet', family: 'Chomsisengphet' },
   { id: 'p-harry',   name: 'Harry Ceballos',          deathDate: '2023-12-01', photo: 'images/harry.png',  kind: 'pet' },
 ];
 
