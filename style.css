@@ -1223,8 +1223,8 @@ main {
 
 .flower-laid {
   display: inline-block;
-  font-size: 0.9rem;
-  margin: 0 1px;
+  font-size: 1.4rem;
+  margin: 0 2px;
   opacity: 0.7;
   color: #d4b896;
   animation: flower-appear 0.4s ease-out;
@@ -1232,7 +1232,7 @@ main {
 
 .flower-laid:nth-child(odd) {
   opacity: 0.55;
-  font-size: 0.8rem;
+  font-size: 1.25rem;
 }
 
 .flower-laid:nth-child(3n) {

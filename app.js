@@ -27,15 +27,10 @@ function initFirebase() {
   }
 }
 
-function hasLeftFlower(memorialId) {
-  return localStorage.getItem('flower-' + memorialId) === '1';
-}
-
 function leaveFlower(memorialId) {
-  if (!flowerDb || hasLeftFlower(memorialId)) return;
+  if (!flowerDb) return;
   const ref = flowerDb.ref('flowers/' + memorialId);
   ref.transaction(current => (current || 0) + 1);
-  localStorage.setItem('flower-' + memorialId, '1');
 }
 
 function watchFlowers(memorialId, callback) {
@@ -707,14 +702,12 @@ function renderDetailPage(id) {
 
   let bodyHTML = '';
 
-  const alreadyLeft = hasLeftFlower(m.id);
   const flowerBtnHTML = `
     <div class="flower-offering" id="flower-offering">
       <div class="flower-display" id="flower-display"></div>
-      <button class="flower-btn ${alreadyLeft ? 'flower-left' : ''}" id="flower-btn"
-        ${alreadyLeft ? 'disabled' : ''}>
+      <button class="flower-btn" id="flower-btn">
         <span class="flower-icon">✿</span>
-        ${alreadyLeft ? 'Flower offered' : 'Leave a flower'}
+        Leave a flower
       </button>
     </div>
   `;
@@ -797,9 +790,6 @@ function renderDetailPage(id) {
   if (flowerBtn) {
     flowerBtn.addEventListener('click', () => {
       leaveFlower(m.id);
-      flowerBtn.classList.add('flower-left');
-      flowerBtn.disabled = true;
-      flowerBtn.innerHTML = '<span class="flower-icon">✿</span> Flower offered';
     });
   }
 
