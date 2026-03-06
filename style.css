@@ -1297,6 +1297,59 @@ main {
   margin-left: 0.3rem;
 }
 
+/* ─── Detail Page Nav ─── */
+
+.dp-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(42, 37, 32, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  padding: 0.75rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  z-index: 10;
+}
+
+.dp-nav:hover {
+  color: var(--gold-soft);
+  border-color: rgba(184, 150, 11, 0.25);
+  background: rgba(42, 37, 32, 0.95);
+}
+
+.dp-nav-prev {
+  left: 0.75rem;
+}
+
+.dp-nav-next {
+  right: 0.75rem;
+}
+
+.dp-nav-name {
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.dp-nav svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .dp-nav-name {
+    display: none;
+  }
+  .dp-nav {
+    padding: 0.6rem;
+  }
+}
+
 header.hidden,
 main.hidden {
   display: none;

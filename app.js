@@ -694,6 +694,24 @@ function escapeHTML(str) {
 
 // ─── Init ───
 
+// ─── Memorial Navigation Order ───
+
+function getMemorialOrder() {
+  const all = loadMemorials();
+  const people = all.filter(m => m.kind !== 'pet');
+  const pets = all.filter(m => m.kind === 'pet');
+  return [...people, ...pets];
+}
+
+function getNeighbors(id) {
+  const order = getMemorialOrder();
+  const idx = order.findIndex(m => m.id === id);
+  if (idx === -1) return { prev: null, next: null };
+  const prev = idx > 0 ? order[idx - 1] : order[order.length - 1];
+  const next = idx < order.length - 1 ? order[idx + 1] : order[0];
+  return { prev, next };
+}
+
 // ─── Detail Page (full-page view for shareable links) ───
 
 function renderDetailPage(id) {
@@ -795,14 +813,25 @@ function renderDetailPage(id) {
     `;
   }
 
-  // Stop watching any previous memorial's flowers
+  // Clean up previous memorial
   if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
+  if (page._keyHandler) document.removeEventListener('keydown', page._keyHandler);
+
+  const { prev, next } = getNeighbors(m.id);
 
   page.innerHTML = `
     <div class="dp-container">
       <a href="#" class="dp-back" onclick="event.preventDefault(); window.location.hash = '';">← Eternal Incense</a>
       ${bodyHTML}
     </div>
+    <button class="dp-nav dp-nav-prev" id="dp-prev" aria-label="Previous">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      <span class="dp-nav-name">${prev ? escapeHTML(prev.name.split(' ')[0]) : ''}</span>
+    </button>
+    <button class="dp-nav dp-nav-next" id="dp-next" aria-label="Next">
+      <span class="dp-nav-name">${next ? escapeHTML(next.name.split(' ')[0]) : ''}</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 6 15 12 9 18"></polyline></svg>
+    </button>
   `;
 
   // Wire up flower button
@@ -841,6 +870,36 @@ function renderDetailPage(id) {
   });
 
   page.dataset.watching = m.id;
+
+  // Prev/next navigation
+  document.getElementById('dp-prev').addEventListener('click', () => {
+    if (prev) window.location.hash = prev.id;
+  });
+  document.getElementById('dp-next').addEventListener('click', () => {
+    if (next) window.location.hash = next.id;
+  });
+
+  // Swipe support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  page.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  page.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx > 0 && prev) window.location.hash = prev.id;
+    if (dx < 0 && next) window.location.hash = next.id;
+  }, { passive: true });
+
+  // Keyboard arrows
+  page._keyHandler = (e) => {
+    if (e.key === 'ArrowLeft' && prev) window.location.hash = prev.id;
+    if (e.key === 'ArrowRight' && next) window.location.hash = next.id;
+  };
+  document.addEventListener('keydown', page._keyHandler);
 }
 
 function renderMainView() {
@@ -849,6 +908,7 @@ function renderMainView() {
   const page = document.getElementById('detail-page');
   if (page) {
     if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
+    if (page._keyHandler) document.removeEventListener('keydown', page._keyHandler);
     page.classList.add('hidden');
   }
   render();
