@@ -6,11 +6,13 @@
 // ─── Firebase (Flower Offerings) ───
 
 const FIREBASE_CONFIG = {
-  // REPLACE with your Firebase project config
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
+  apiKey: "AIzaSyAld8X2pej_on5kwnGLOYvVIgRUSgDOV-U",
+  authDomain: "eternal-incense.firebaseapp.com",
+  databaseURL: "https://eternal-incense-default-rtdb.firebaseio.com",
+  projectId: "eternal-incense",
+  storageBucket: "eternal-incense.firebasestorage.app",
+  messagingSenderId: "1014197497498",
+  appId: "1:1014197497498:web:33be4a4e21f9895c2f3923",
 };
 
 let flowerDb = null;
