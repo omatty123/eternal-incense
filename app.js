@@ -537,7 +537,7 @@ function renderNextCeremony() {
   `;
 
   container.querySelectorAll('.next-ceremony-row').forEach(row => {
-    row.addEventListener('click', () => showDetail(row.dataset.id));
+    row.addEventListener('click', () => { window.location.hash = row.dataset.id; });
   });
 }
 
@@ -631,6 +631,118 @@ function escapeHTML(str) {
 }
 
 // ─── Init ───
+
+// ─── Detail Page (full-page view for shareable links) ───
+
+function renderDetailPage(id) {
+  const memorials = loadMemorials();
+  const m = memorials.find(x => x.id === id);
+  if (!m) {
+    // Unknown ID — fall back to main view
+    history.replaceState(null, '', window.location.pathname);
+    renderMainView();
+    return;
+  }
+
+  document.querySelector('header').classList.add('hidden');
+  document.querySelector('main').classList.add('hidden');
+  document.getElementById('detail-modal').classList.add('hidden');
+
+  let page = document.getElementById('detail-page');
+  if (!page) {
+    page = document.createElement('div');
+    page.id = 'detail-page';
+    document.body.appendChild(page);
+  }
+  page.classList.remove('hidden');
+
+  const detailSrc = m.photo || 'images/chrysanthemum.jpg';
+
+  let bodyHTML = '';
+
+  if (!m.deathDate) {
+    bodyHTML = `
+      <div class="dp-photo-wrapper">
+        <img class="dp-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
+      </div>
+      <div class="dp-name">${escapeHTML(m.name)}</div>
+      <div class="dp-incense">${createSmokeHTML(5)}</div>
+    `;
+  } else {
+    const d = new Date(m.deathDate + 'T00:00:00');
+    const days = daysSinceDeath(m.deathDate);
+
+    const ritualItems = RITUALS.map(r => {
+      const rDate = getRitualDate(m.deathDate, r);
+      const status = getRitualStatus(rDate);
+      const diff = daysBetween(new Date(), rDate);
+      let countdown = '';
+      if (status === 'past') {
+        countdown = `<div class="ritual-passed">Observed</div>`;
+      } else if (diff === 0) {
+        countdown = `<div class="ritual-countdown">Today</div>`;
+      } else {
+        countdown = `<div class="ritual-countdown">${diff} day${diff === 1 ? '' : 's'} from now</div>`;
+      }
+      return `
+        <div class="ritual-item">
+          <div class="ritual-marker ${status}"></div>
+          <div class="ritual-info">
+            <div class="ritual-label">${r.label}<span class="ritual-label-kr">${r.korean}</span></div>
+            <div class="ritual-date-line">${formatDate(rDate)}</div>
+            ${countdown}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const nextAnnual = getNextAnnualMemorial(m.deathDate);
+    const annualDiff = daysBetween(new Date(), nextAnnual);
+
+    bodyHTML = `
+      <div class="dp-photo-wrapper">
+        <img class="dp-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
+      </div>
+      <div class="dp-name">${escapeHTML(m.name)}</div>
+      <div class="dp-date">${formatDate(d)}</div>
+      <div class="dp-days">${days} days since passing</div>
+      <div class="dp-incense">${createSmokeHTML(5)}</div>
+      <div class="ritual-timeline">
+        <h3>Memorial Rites</h3>
+        ${ritualItems}
+      </div>
+      <div class="annual-section">
+        <h3>Annual Memorial (기일)</h3>
+        <div class="annual-date">${formatDate(nextAnnual)}</div>
+        <div class="annual-countdown">${annualDiff === 0 ? 'Today' : `${annualDiff} day${annualDiff === 1 ? '' : 's'} away`}</div>
+      </div>
+    `;
+  }
+
+  page.innerHTML = `
+    <div class="dp-container">
+      <a href="#" class="dp-back" onclick="event.preventDefault(); window.location.hash = '';">← Eternal Incense</a>
+      ${bodyHTML}
+    </div>
+  `;
+}
+
+function renderMainView() {
+  document.querySelector('header').classList.remove('hidden');
+  document.querySelector('main').classList.remove('hidden');
+  const page = document.getElementById('detail-page');
+  if (page) page.classList.add('hidden');
+  render();
+}
+
+function handleRouting() {
+  const hash = window.location.hash.slice(1);
+  if (hash) {
+    renderDetailPage(hash);
+  } else {
+    renderMainView();
+  }
+}
 
 function init() {
   // Migrate old localStorage format if present
@@ -783,7 +895,7 @@ function init() {
       return;
     }
     const card = e.target.closest('.memorial-card');
-    if (card) showDetail(card.dataset.id);
+    if (card) window.location.hash = card.dataset.id;
   }
   document.getElementById('memorials-people').addEventListener('click', handleCardClick);
   document.getElementById('memorials-pets').addEventListener('click', handleCardClick);
@@ -796,6 +908,13 @@ function init() {
   });
 
   render();
+
+  // Hash-based routing for shareable individual links
+  window.addEventListener('hashchange', handleRouting);
+  // Check if we loaded with a hash
+  if (window.location.hash) {
+    handleRouting();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
