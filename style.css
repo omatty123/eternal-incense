@@ -1223,20 +1223,21 @@ main {
 
 .flower-laid {
   display: inline-block;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   margin: 0 2px;
-  opacity: 0.7;
-  color: #d4b896;
+  color: #f0d8a8;
+  text-shadow: 0 0 8px rgba(240, 216, 168, 0.4);
   animation: flower-appear 0.4s ease-out;
 }
 
 .flower-laid:nth-child(odd) {
-  opacity: 0.55;
-  font-size: 1.25rem;
+  font-size: 1.6rem;
+  color: #e8c88a;
 }
 
 .flower-laid:nth-child(3n) {
-  opacity: 0.85;
+  color: #f5e0b8;
+  text-shadow: 0 0 10px rgba(245, 224, 184, 0.5);
 }
 
 @keyframes flower-appear {
@@ -1278,7 +1279,7 @@ main {
   border-color: rgba(212, 184, 150, 0.35);
 }
 
-.flower-btn.flower-left {
+.flower-btn.flower-spent {
   color: var(--text-dim);
   border-color: var(--border);
   background: transparent;
@@ -1286,8 +1287,14 @@ main {
 }
 
 .flower-icon {
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
+}
+
+.flower-remaining {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-left: 0.3rem;
 }
 
 header.hidden,

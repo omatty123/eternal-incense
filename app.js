@@ -27,10 +27,30 @@ function initFirebase() {
   }
 }
 
+function getDailyFlowerCount(memorialId) {
+  const key = 'flower-daily-' + memorialId;
+  try {
+    const data = JSON.parse(localStorage.getItem(key));
+    if (data && data.date === new Date().toDateString()) return data.count;
+    return 0;
+  } catch { return 0; }
+}
+
+function recordFlowerOffered(memorialId) {
+  const key = 'flower-daily-' + memorialId;
+  const count = getDailyFlowerCount(memorialId) + 1;
+  localStorage.setItem(key, JSON.stringify({ date: new Date().toDateString(), count }));
+}
+
+function canLeaveFlower(memorialId) {
+  return getDailyFlowerCount(memorialId) < 3;
+}
+
 function leaveFlower(memorialId) {
-  if (!flowerDb) return;
+  if (!flowerDb || !canLeaveFlower(memorialId)) return;
   const ref = flowerDb.ref('flowers/' + memorialId);
   ref.transaction(current => (current || 0) + 1);
+  recordFlowerOffered(memorialId);
 }
 
 function watchFlowers(memorialId, callback) {
@@ -702,12 +722,14 @@ function renderDetailPage(id) {
 
   let bodyHTML = '';
 
+  const remaining = 3 - getDailyFlowerCount(m.id);
   const flowerBtnHTML = `
     <div class="flower-offering" id="flower-offering">
       <div class="flower-display" id="flower-display"></div>
-      <button class="flower-btn" id="flower-btn">
+      <button class="flower-btn${remaining <= 0 ? ' flower-spent' : ''}" id="flower-btn"
+        ${remaining <= 0 ? 'disabled' : ''}>
         <span class="flower-icon">✿</span>
-        Leave a flower
+        ${remaining <= 0 ? 'Flowers offered today' : `Leave a flower <span class="flower-remaining">${remaining} left today</span>`}
       </button>
     </div>
   `;
@@ -790,6 +812,14 @@ function renderDetailPage(id) {
   if (flowerBtn) {
     flowerBtn.addEventListener('click', () => {
       leaveFlower(m.id);
+      const left = 3 - getDailyFlowerCount(m.id);
+      if (left <= 0) {
+        flowerBtn.classList.add('flower-spent');
+        flowerBtn.disabled = true;
+        flowerBtn.innerHTML = '<span class="flower-icon">✿</span> Flowers offered today';
+      } else {
+        flowerBtn.innerHTML = `<span class="flower-icon">✿</span> Leave a flower <span class="flower-remaining">${left} left today</span>`;
+      }
     });
   }
 
