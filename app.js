@@ -3,6 +3,51 @@
    Memorial ritual calculator & incense shrine
    ═══════════════════════════════════════════ */
 
+// ─── Firebase (Flower Offerings) ───
+
+const FIREBASE_CONFIG = {
+  // REPLACE with your Firebase project config
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+};
+
+let flowerDb = null;
+
+function initFirebase() {
+  if (!FIREBASE_CONFIG.databaseURL) return;
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    flowerDb = firebase.database();
+  } catch (e) {
+    console.warn('Firebase init failed:', e);
+  }
+}
+
+function hasLeftFlower(memorialId) {
+  return localStorage.getItem('flower-' + memorialId) === '1';
+}
+
+function leaveFlower(memorialId) {
+  if (!flowerDb || hasLeftFlower(memorialId)) return;
+  const ref = flowerDb.ref('flowers/' + memorialId);
+  ref.transaction(current => (current || 0) + 1);
+  localStorage.setItem('flower-' + memorialId, '1');
+}
+
+function watchFlowers(memorialId, callback) {
+  if (!flowerDb) { callback(0); return; }
+  flowerDb.ref('flowers/' + memorialId).on('value', snap => {
+    callback(snap.val() || 0);
+  });
+}
+
+function unwatchFlowers(memorialId) {
+  if (!flowerDb) return;
+  flowerDb.ref('flowers/' + memorialId).off();
+}
+
 const ADDED_KEY = 'eternal-incense-added';
 const HIDDEN_KEY = 'eternal-incense-hidden';
 const PRAYER_KEY = 'eternal-incense-prayers';
@@ -660,6 +705,18 @@ function renderDetailPage(id) {
 
   let bodyHTML = '';
 
+  const alreadyLeft = hasLeftFlower(m.id);
+  const flowerBtnHTML = `
+    <div class="flower-offering" id="flower-offering">
+      <div class="flower-display" id="flower-display"></div>
+      <button class="flower-btn ${alreadyLeft ? 'flower-left' : ''}" id="flower-btn"
+        ${alreadyLeft ? 'disabled' : ''}>
+        <span class="flower-icon">✿</span>
+        ${alreadyLeft ? 'Flower offered' : 'Leave a flower'}
+      </button>
+    </div>
+  `;
+
   if (!m.deathDate) {
     bodyHTML = `
       <div class="dp-photo-wrapper">
@@ -667,6 +724,7 @@ function renderDetailPage(id) {
       </div>
       <div class="dp-name">${escapeHTML(m.name)}</div>
       <div class="dp-incense">${createSmokeHTML(5)}</div>
+      ${flowerBtnHTML}
     `;
   } else {
     const d = new Date(m.deathDate + 'T00:00:00');
@@ -707,6 +765,7 @@ function renderDetailPage(id) {
       <div class="dp-date">${formatDate(d)}</div>
       <div class="dp-days">${days} days since passing</div>
       <div class="dp-incense">${createSmokeHTML(5)}</div>
+      ${flowerBtnHTML}
       <div class="ritual-timeline">
         <h3>Memorial Rites</h3>
         ${ritualItems}
@@ -719,19 +778,57 @@ function renderDetailPage(id) {
     `;
   }
 
+  // Stop watching any previous memorial's flowers
+  if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
+
   page.innerHTML = `
     <div class="dp-container">
       <a href="#" class="dp-back" onclick="event.preventDefault(); window.location.hash = '';">← Eternal Incense</a>
       ${bodyHTML}
     </div>
   `;
+
+  // Wire up flower button
+  const flowerBtn = document.getElementById('flower-btn');
+  const flowerDisplay = document.getElementById('flower-display');
+
+  if (flowerBtn) {
+    flowerBtn.addEventListener('click', () => {
+      leaveFlower(m.id);
+      flowerBtn.classList.add('flower-left');
+      flowerBtn.disabled = true;
+      flowerBtn.innerHTML = '<span class="flower-icon">✿</span> Flower offered';
+    });
+  }
+
+  // Watch for real-time flower count
+  watchFlowers(m.id, count => {
+    if (!flowerDisplay) return;
+    if (count === 0) {
+      flowerDisplay.innerHTML = '';
+      return;
+    }
+    const visible = Math.min(count, 30);
+    let flowers = '';
+    for (let i = 0; i < visible; i++) {
+      flowers += '<span class="flower-laid">✿</span>';
+    }
+    const moreText = count > 30 ? `<span class="flower-more">+${count - 30}</span>` : '';
+    flowerDisplay.innerHTML = flowers + moreText +
+      `<div class="flower-count">${count} flower${count === 1 ? '' : 's'} offered</div>`;
+  });
+
+  page.dataset.watching = m.id;
 }
 
 function renderMainView() {
   document.querySelector('header').classList.remove('hidden');
   document.querySelector('main').classList.remove('hidden');
   const page = document.getElementById('detail-page');
-  if (page) page.classList.add('hidden');
+  if (page) {
+    if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
+    page.classList.add('hidden');
+  }
   render();
 }
 
@@ -745,6 +842,8 @@ function handleRouting() {
 }
 
 function init() {
+  initFirebase();
+
   // Migrate old localStorage format if present
   const oldKey = 'eternal-incense-memorials';
   const oldData = localStorage.getItem(oldKey);
