@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T13:27:39.039993+00:00",
+  "title": "Design System: Eternal Incense",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "-8px 12px 45px #0006",
+        "purpose": "Ambient separation for secondary dialogs."
+      },
+      {
+        "name": "frame",
+        "value": "3px 6px 4px #0008",
+        "purpose": "Drop shadow under photographic wooden frames."
+      }
+    ],
+    "motion": [
+      {
+        "name": "portrait",
+        "value": "transform 400ms ease, filter 400ms ease",
+        "purpose": "Subtle shelf hover."
+      },
+      {
+        "name": "smoke",
+        "value": "16s / 19s / 17s linear upward flow with 18–23s lateral drift",
+        "purpose": "Upward incense wisps; still smoke with reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "close-viewpoint",
+        "value": "900px"
+      },
+      {
+        "name": "tablet-start",
+        "value": "600px"
+      },
+      {
+        "name": "compact",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "description": "Primary action as implemented in the memorial interface.",
+      "html": "<button class=\"ds-primary\">Save</button>",
+      "css": ".ds-primary{font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;background:#d7decd;color:#18231a;border:1px solid #d7decd;padding:10px 20px;min-height:44px;cursor:pointer}.ds-primary:focus-visible{outline:1px solid #e4eade;outline-offset:5px}.ds-primary:hover{background:#e6eadf}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "description": "Secondary action as implemented in the memorial interface.",
+      "html": "<button class=\"ds-secondary\">Cancel</button>",
+      "css": ".ds-secondary{font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;background:transparent;color:var(--ink,#f1ece1);border:1px solid #b6c1ac75;padding:10px 20px;min-height:44px;cursor:pointer}.ds-secondary:focus-visible{outline:1px solid #e4eade;outline-offset:5px}.ds-secondary:hover{border-color:#d7decd}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "description": "Text action as implemented in the memorial interface.",
+      "html": "<button class=\"ds-text\">Leave a flower</button>",
+      "css": ".ds-text{font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;background:transparent;color:var(--ink,#f1ece1);border:0;padding:7px 0;min-height:44px;cursor:pointer}.ds-text:focus-visible{outline:1px solid #e4eade;outline-offset:5px}.ds-text:hover{text-decoration:underline;text-underline-offset:5px}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square field used inside secondary dialogs.",
+      "html": "<label class=\"ds-label\" for=\"ds-name\">Name</label><input class=\"ds-field\" id=\"ds-name\" placeholder=\"Their name\">",
+      "css": ".ds-label{display:block;color:var(--muted,#c6c8bc);margin-bottom:8px;font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;}.ds-field{font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;background:#111914;color:var(--ink,#f1ece1);border:1px solid #a0af9b66;border-radius:0;padding:10px 12px;min-height:44px}.ds-field::placeholder{color:#bbc3b6}.ds-field:focus-visible{outline:1px solid #e4eade;outline-offset:5px}"
+    },
+    {
+      "name": "Memorial navigation",
+      "kind": "nav",
+      "description": "Quiet link to the hall or adjacent memorial.",
+      "html": "<nav aria-label=\"Memorial navigation\"><a class=\"ds-nav\" href=\"#\">← Eternal Incense</a></nav>",
+      "css": ".ds-nav{font-family:'Source Sans 3','Noto Sans KR',sans-serif;font-size:18px;display:inline-flex;align-items:center;gap:12px;min-height:44px;color:var(--ink,#f1ece1);text-decoration:none;text-shadow:0 2px 5px #000}.ds-nav:hover{text-decoration:underline}.ds-nav:focus-visible{outline:1px solid #e4eade;outline-offset:5px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The room is the interface.",
+    "overview": "The approved Front Page and Individual Page references establish a photographic Korean hanok: natural wood, paper windows, garden light and quiet remembrance. The built interface keeps clean scenery separate from live memorial photographs, names, incense and ritual dates. Mode: Experience.",
+    "keyCharacteristics": [
+      "Real photographs in wooden frames, resting on an architectural shelf or table.",
+      "Restrained sans-serif text and a small number of visible actions.",
+      "Three incense sticks with slow, translucent smoke."
+    ],
+    "rules": [
+      {
+        "name": "The No Serif Rule",
+        "body": "Use Source Sans 3 for English and Noto Sans KR for Korean, with sans-serif fallbacks everywhere. The user's explicit “No Serif Fonts!” correction supersedes the original reference's serif direction.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "**Do** keep photographs, memorial data, dates, sticks and smoke separate from photographic scenery.",
+      "**Do** preserve the room's material warmth, readable close mobile viewpoint and quiet lower date band.",
+      "**Do** use the four environment assets with provenance recorded in [images/environment/PROVENANCE.md](images/environment/PROVENANCE.md).",
+      "**Do** preserve the supplied Dexi photograph unchanged."
+    ],
+    "donts": [
+      "**Don't** use serif fonts, including for memorial names, dates or Korean headings.",
+      "**Don't** introduce gold interface styling, corporate navigation or religious decoration.",
+      "**Don't** bake application content into backgrounds or invent memorial photographs or dates.",
+      "**Don't** let the desktop scene's crop push portraits or actions into the observance and navigation bands."
+    ]
+  }
+}

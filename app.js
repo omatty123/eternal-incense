@@ -16,12 +16,15 @@ const FIREBASE_CONFIG = {
 };
 
 let flowerDb = null;
+let flowersConnected = false;
+const pendingFlowerOfferings = new Set();
 
 function initFirebase() {
   if (!FIREBASE_CONFIG.databaseURL) return;
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     flowerDb = firebase.database();
+    flowerDb.ref('.info/connected').on('value', snap => { flowersConnected = snap.val() === true; });
   } catch (e) {
     console.warn('Firebase init failed:', e);
   }
@@ -46,18 +49,26 @@ function canLeaveFlower(memorialId) {
   return getDailyFlowerCount(memorialId) < 3;
 }
 
-function leaveFlower(memorialId) {
-  if (!flowerDb || !canLeaveFlower(memorialId)) return;
-  const ref = flowerDb.ref('flowers/' + memorialId);
-  ref.transaction(current => (current || 0) + 1);
-  recordFlowerOffered(memorialId);
+async function leaveFlower(memorialId) {
+  if (!flowerDb || !flowersConnected) throw new Error('Flower offerings are not connected. Please try again in a moment.');
+  if (!canLeaveFlower(memorialId)) throw new Error('Three flowers have already been offered today.');
+  if (pendingFlowerOfferings.has(memorialId)) throw new Error('Your flower is still being offered.');
+  pendingFlowerOfferings.add(memorialId);
+  try {
+    const result = await flowerDb.ref('flowers/' + memorialId).transaction(current => (current || 0) + 1);
+    if (!result.committed) throw new Error('The flower was not saved. Please try again.');
+    recordFlowerOffered(memorialId);
+    return result.snapshot.val();
+  } finally {
+    pendingFlowerOfferings.delete(memorialId);
+  }
 }
 
-function watchFlowers(memorialId, callback) {
+function watchFlowers(memorialId, callback, onError = () => {}) {
   if (!flowerDb) { callback(0); return; }
   flowerDb.ref('flowers/' + memorialId).on('value', snap => {
     callback(snap.val() || 0);
-  });
+  }, onError);
 }
 
 function unwatchFlowers(memorialId) {
@@ -92,7 +103,7 @@ const PERMANENT_MEMORIALS = [
   { id: 'p-adam-shannon', name: 'Adam & Shannon',      deathDate: '2015-12-26', photo: 'images/adam-shannon.png', kind: 'person' },
   // Pets — most recent first
   { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg',  kind: 'pet' },
-  { id: 'p-dae-dexi', name: 'Dae Dexi',                deathDate: '2026-09-18', photo: 'images/dexi.png',  kind: 'pet', weeklyRites: true },
+  { id: 'p-dae-dexi', name: 'Dae Dexi',                deathDate: '2026-09-18', photo: 'images/dexi-clean.png', kind: 'pet', weeklyRites: true, remembrance: 'Her long and happy life on this earth is complete. She has returned.' },
   { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
   { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
   { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
@@ -114,11 +125,22 @@ function getRitualsFor(memorial) {
   if (!memorial.weeklyRites) return RITUALS;
   const weekly = Array.from({ length: 6 }, (_, index) => ({
     key: `weekly-${index + 1}`,
-    label: `Weekly Rite ${index + 1}`,
+    label: `${ordinal((index + 1) * 7)} Day`,
     korean: '칠일재',
-    days: (index + 1) * 7,
+    days: (index + 1) * 7 - 1,
   }));
   return [...weekly, ...RITUALS];
+}
+
+// Seven displayed observances use the same day-one-inclusive convention as 49재.
+// weeklyRites still controls the established reminder/export schedule.
+function getSevenDayObservances(memorial) {
+  if (!memorial.deathDate) return [];
+  return Array.from({ length: 7 }, (_, i) => ({
+    key: i === 6 ? '49day' : `weekly-${i + 1}`,
+    label: `${ordinal((i + 1) * 7)} Day`, korean: i === 6 ? '사십구재' : '칠일재',
+    days: (i + 1) * 7 - 1,
+  }));
 }
 
 // ─── Data Layer ───
@@ -197,6 +219,11 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+function createRemembranceHTML(memorial) {
+  if (!memorial.remembrance) return '';
+  return `<p class="dp-remembrance">${escapeHTML(memorial.remembrance)}</p>`;
+}
+
 // ─── Date Calculations ───
 
 function getRitualDate(deathDate, ritual) {
@@ -236,7 +263,7 @@ function getNextAnnualMemorial(deathDate) {
   const d = new Date(deathDate + 'T00:00:00');
   const now = new Date();
   const thisYear = new Date(now.getFullYear(), d.getMonth(), d.getDate());
-  if (thisYear > now) return thisYear;
+  if (daysBetween(now, thisYear) >= 0) return thisYear;
   return new Date(now.getFullYear() + 1, d.getMonth(), d.getDate());
 }
 
@@ -262,20 +289,20 @@ function icsNextDay(date) {
   return icsDate(d);
 }
 
-function generateICS() {
-  const memorials = loadMemorials();
+function generateICS(memorialId = null, selectedRitual = null) {
+  const memorials = loadMemorials().filter(m => (!memorialId || m.id === memorialId) && m.deathDate);
   const now = new Date();
   const events = [];
 
   memorials.forEach(m => {
     // Ritual dates
-    getRitualsFor(m).forEach(r => {
+    (selectedRitual ? (selectedRitual.key === 'annual' ? [] : [selectedRitual]) : getRitualsFor(m)).forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const diff = daysBetween(now, rDate);
-      if (diff >= 0) {
+      if (diff >= 0 || selectedRitual) {
         events.push({
           summary: `${r.korean} — ${m.name}`,
-          description: `${r.label} memorial (${r.korean}) for ${m.name}.\\nPassing: ${m.deathDate}`,
+          description: `${r.label} memorial (${r.korean}) for ${m.name}.\nPassing: ${m.deathDate}`,
           date: rDate,
           uid: `${m.id}-${r.key}@eternal-incense`,
         });
@@ -284,12 +311,12 @@ function generateICS() {
 
     // Annual memorial (기일) for next 10 years
     const d = new Date(m.deathDate + 'T00:00:00');
-    for (let y = now.getFullYear(); y <= now.getFullYear() + 10; y++) {
+    if (!selectedRitual || selectedRitual.key === 'annual') for (let y = now.getFullYear(); y <= now.getFullYear() + 10; y++) {
       const annual = new Date(y, d.getMonth(), d.getDate());
-      if (annual > now) {
+      if (daysBetween(now, annual) >= 0 && (!selectedRitual || y === getNextAnnualMemorial(m.deathDate).getFullYear())) {
         events.push({
           summary: `기일 — ${m.name}`,
-          description: `Annual memorial (기일) for ${m.name}.\\nPassing: ${m.deathDate}`,
+          description: `Annual memorial (기일) for ${m.name}.\nPassing: ${m.deathDate}`,
           date: annual,
           uid: `${m.id}-annual-${y}@eternal-incense`,
         });
@@ -310,38 +337,39 @@ function generateICS() {
     ics.push(
       'BEGIN:VEVENT',
       `UID:${e.uid}`,
+      `DTSTAMP:${now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`,
       `DTSTART;VALUE=DATE:${icsDate(e.date)}`,
       `DTEND;VALUE=DATE:${icsNextDay(e.date)}`,
-      `SUMMARY:${e.summary}`,
-      `DESCRIPTION:${e.description}`,
+      `SUMMARY:${escapeICS(e.summary)}`,
+      `DESCRIPTION:${escapeICS(e.description)}`,
       // Reminder: 7 days before
       'BEGIN:VALARM',
       'TRIGGER:-P7D',
       'ACTION:DISPLAY',
-      `DESCRIPTION:7 days until ${e.summary}`,
+      `DESCRIPTION:${escapeICS("7 days until " + e.summary)}`,
       'END:VALARM',
       // Reminder: 1 day before
       'BEGIN:VALARM',
       'TRIGGER:-P1D',
       'ACTION:DISPLAY',
-      `DESCRIPTION:Tomorrow: ${e.summary}`,
+      `DESCRIPTION:${escapeICS("Tomorrow: " + e.summary)}`,
       'END:VALARM',
       // Reminder: day of
       'BEGIN:VALARM',
       'TRIGGER:PT0S',
       'ACTION:DISPLAY',
-      `DESCRIPTION:Today: ${e.summary}`,
+      `DESCRIPTION:${escapeICS("Today: " + e.summary)}`,
       'END:VALARM',
       'END:VEVENT'
     );
   });
 
   ics.push('END:VCALENDAR');
-  return ics.join('\r\n');
+  return ics.map(foldICSLine).join('\r\n') + '\r\n';
 }
 
-function downloadICS() {
-  const content = generateICS();
+function downloadICS(memorialId = null, selectedRitual = null) {
+  const content = generateICS(memorialId, selectedRitual);
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -353,770 +381,415 @@ function downloadICS() {
   URL.revokeObjectURL(url);
 }
 
-// ─── Smoke HTML ───
+// ─── Presentation helpers ───
 
-function createSmokeHTML(stickCount = 3) {
-  let html = '<div class="incense-container">';
-
-  // Smoke
-  html += '<div class="smoke-container">';
-  for (let i = 0; i < 8; i++) {
-    const duration = 3 + Math.random() * 3;
-    const delay = Math.random() * 3;
-    const drift1 = (Math.random() - 0.5) * 12;
-    const drift2 = (Math.random() - 0.5) * 14;
-    const drift3 = (Math.random() - 0.5) * 10;
-    const drift4 = (Math.random() - 0.5) * 8;
-    html += `<div class="smoke" style="
-      --duration: ${duration}s;
-      --delay: ${delay}s;
-      --drift1: ${drift1}px;
-      --drift2: ${drift2}px;
-      --drift3: ${drift3}px;
-      --drift4: ${drift4}px;
-    "></div>`;
-  }
-  html += '</div>';
-
-  // Sticks
-  html += '<div class="incense-sticks">';
-  for (let i = 0; i < stickCount; i++) {
-    html += '<div class="incense-stick"></div>';
-  }
-  html += '</div>';
-
-  // Holder
-  html += '<div class="incense-holder"><div class="holder-bowl"></div><div class="holder-base"></div></div>';
-  html += '</div>';
-  return html;
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function createMiniIncenseHTML() {
-  let html = '<div class="mini-incense">';
-  // Mini smoke
-  for (let i = 0; i < 3; i++) {
-    const duration = 2.5 + Math.random() * 2;
-    const delay = Math.random() * 2;
-    const drift1 = (Math.random() - 0.5) * 6;
-    const drift2 = (Math.random() - 0.5) * 5;
-    html += `<div class="mini-smoke" style="
-      --duration: ${duration}s;
-      --delay: ${delay}s;
-      --drift1: ${drift1}px;
-      --drift2: ${drift2}px;
-    "></div>`;
-  }
-  html += '<div class="mini-stick"></div>';
-  html += '<div class="mini-bowl"></div>';
-  html += '</div>';
-  return html;
+function escapeICS(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
 }
 
-// ─── Render Prayers ───
-
-function renderPrayers() {
-  const prayers = loadPrayers();
-  const list = document.getElementById('prayer-list');
-
-  if (prayers.length === 0) {
-    list.innerHTML = '<div class="empty-state" style="padding:0.5rem 0"><p style="font-size:0.85rem">No prayer intentions yet.</p></div>';
-    return;
+function foldICSLine(line) {
+  const encoder = new TextEncoder();
+  let result = '', bytes = 0;
+  for (const char of line) {
+    const length = encoder.encode(char).length;
+    if (bytes + length > 75) { result += '\r\n '; bytes = 1; }
+    result += char;
+    bytes += length;
   }
-
-  list.innerHTML = prayers.map(p => `
-    <div class="prayer-item">
-      <span class="prayer-category">${escapeHTML(p.category)}</span>
-      ${p.detail ? `<span class="prayer-detail">${escapeHTML(p.detail)}</span>` : ''}
-      <button class="prayer-remove" data-prayer-delete="${p.id}" title="Remove">&times;</button>
-    </div>
-  `).join('');
+  return result;
 }
 
-// ─── Render Memorials ───
-
-function renderMemorials() {
-  const memorials = loadMemorials();
-  const grid = document.getElementById('memorials');
-  const alerts = document.getElementById('alerts');
-
-  // Upcoming ritual alerts
-  const upcoming = [];
-  memorials.forEach(m => {
-    if (!m.deathDate) return;
-    getRitualsFor(m).forEach(r => {
-      const rDate = getRitualDate(m.deathDate, r);
-      const status = getRitualStatus(rDate);
-      if (status === 'imminent') {
-        const diff = daysBetween(new Date(), rDate);
-        upcoming.push({ name: m.name, ritual: r.label, korean: r.korean, date: formatDate(rDate), days: diff });
-      }
-    });
-  });
-
-  alerts.innerHTML = upcoming.map(u =>
-    `<div class="alert">
-      <strong>${escapeHTML(u.name)}</strong> ${u.ritual} (${u.korean}) is ${u.days === 0 ? 'today' : `in ${u.days} day${u.days === 1 ? '' : 's'}`} (${u.date})
-    </div>`
-  ).join('');
-
-  if (memorials.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><p>No memorials yet.</p><p>Add a loved one to begin their perpetual incense.</p></div>`;
-    return;
-  }
-
-  const people = memorials.filter(m => m.kind !== 'pet');
-  const pets = memorials
-    .filter(m => m.kind === 'pet')
-    .sort((a, b) => {
-      if (!a.deathDate && !b.deathDate) return 0;
-      if (!a.deathDate) return 1;
-      if (!b.deathDate) return -1;
-      return b.deathDate.localeCompare(a.deathDate);
-    });
-
-  function renderCard(m) {
-    const src = m.photo || 'images/chrysanthemum.jpg';
-    const photoHTML = `<div class="card-photo-wrapper">
-      <img class="card-photo" src="${src}" alt="${escapeHTML(m.name)}">
-    </div>`;
-
-    let dateHTML = '';
-    let ritualHTML = '';
-    if (m.deathDate) {
-      const d = new Date(m.deathDate + 'T00:00:00');
-      dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
-      ritualHTML = `<div class="ritual-row">${getRitualsFor(m).map(r => {
-        const rDate = getRitualDate(m.deathDate, r);
-        const status = getRitualStatus(rDate);
-        return `<span class="ritual-badge ${status}">${r.label}</span>`;
-      }).join('')}</div>`;
-    }
-
-    return `
-      <div class="memorial-card" data-id="${m.id}">
-        <div class="card-actions">
-          <button class="btn-delete" data-delete="${m.id}" title="Remove memorial">&times;</button>
-        </div>
-        ${photoHTML}
-        <div class="card-body">
-          ${createSmokeHTML(3)}
-          <div class="card-name">${escapeHTML(m.name)}</div>
-          ${dateHTML}
-          ${ritualHTML}
-        </div>
-      </div>
-    `;
-  }
-
-  // Group pets by family
-  function renderPetCards(list) {
-    const families = {};
-    const solo = [];
-    list.forEach(m => {
-      if (m.family) {
-        if (!families[m.family]) families[m.family] = [];
-        families[m.family].push(m);
-      } else {
-        solo.push(m);
-      }
-    });
-
-    let html = '';
-    // Solo pets first
-    solo.forEach(m => { html += renderCard(m); });
-    // Family groups
-    Object.entries(families).forEach(([family, members]) => {
-      const lead = members.find(m => m.deathDate) || members[0];
-      const others = members.filter(m => m !== lead);
-      const src = lead.photo || 'images/chrysanthemum.jpg';
-
-      let dateHTML = '';
-      let ritualHTML = '';
-      if (lead.deathDate) {
-        const d = new Date(lead.deathDate + 'T00:00:00');
-        dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
-        ritualHTML = `<div class="ritual-row">${getRitualsFor(lead).map(r => {
-          const rDate = getRitualDate(lead.deathDate, r);
-          const status = getRitualStatus(rDate);
-          return `<span class="ritual-badge ${status}">${r.label}</span>`;
-        }).join('')}</div>`;
-      }
-
-      const otherNamesHTML = others.map(m => {
-        const first = escapeHTML(m.name.split(' ')[0]);
-        return `<div class="family-member">
-          <span class="family-member-name">${first}</span>
-          ${createMiniIncenseHTML()}
-        </div>`;
-      }).join('');
-
-      html += `
-        <div class="memorial-card family-card" data-id="${lead.id}">
-          <div class="card-actions">
-            <button class="btn-delete" data-delete="${lead.id}" title="Remove memorial">&times;</button>
-          </div>
-          <div class="card-photo-wrapper">
-            <img class="card-photo" src="${src}" alt="${escapeHTML(family)} family">
-          </div>
-          <div class="card-body">
-            ${createSmokeHTML(3)}
-            <div class="card-name">${escapeHTML(lead.name)}</div>
-            ${dateHTML}
-            ${ritualHTML}
-            <div class="family-members">${otherNamesHTML}</div>
-          </div>
-        </div>
-      `;
-    });
-    return html;
-  }
-
-  document.getElementById('memorials-people').innerHTML = people.map(m => renderCard(m)).join('');
-  document.getElementById('memorials-pets').innerHTML = renderPetCards(pets);
+function localDateString(date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
 
-function renderNextCeremony() {
-  const container = document.getElementById('next-ceremony');
-  const memorials = loadMemorials();
-  const now = new Date();
-  var upcoming = [];
-
-  memorials.forEach(m => {
-    if (!m.deathDate) return;
-
-    getRitualsFor(m).forEach(r => {
-      const rDate = getRitualDate(m.deathDate, r);
-      const diff = daysBetween(now, rDate);
-      if (diff >= 0) {
-        upcoming.push({ diff, date: rDate, label: r.label, korean: r.korean, name: m.name, id: m.id });
-      }
-    });
-
-    const annual = getNextAnnualMemorial(m.deathDate);
-    const annualDiff = daysBetween(now, annual);
-    if (annualDiff >= 0) {
-      upcoming.push({ diff: annualDiff, date: annual, label: 'Annual Memorial', korean: '기일', name: m.name, id: m.id });
-    }
-  });
-
-  upcoming.sort((a, b) => a.diff - b.diff);
-  upcoming = upcoming.slice(0, 5);
-
-  if (!upcoming.length) { container.innerHTML = ''; return; }
-
-  container.innerHTML = `
-    <div class="next-ceremony-list">
-      <div class="next-ceremony-heading">Upcoming Ceremonies</div>
-      ${upcoming.map(c => {
-        const daysText = c.diff === 0 ? 'Today' : c.diff + 'd';
-        return `<div class="next-ceremony-row" data-id="${c.id}">
-          <span class="next-ceremony-days">${daysText}</span>
-          <span class="next-ceremony-detail">${escapeHTML(c.label)} <span class="next-ceremony-korean">${c.korean}</span></span>
-          <span class="next-ceremony-for">${escapeHTML(c.name)}</span>
-          <span class="next-ceremony-date">${formatDate(c.date)}</span>
-        </div>`;
-      }).join('')}
-    </div>
-  `;
-
-  container.querySelectorAll('.next-ceremony-row').forEach(row => {
-    row.addEventListener('click', () => { window.location.hash = row.dataset.id; });
-  });
+function ordinal(n) {
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+  return `${n}${suffix}`;
 }
 
-function render() {
-  renderNextCeremony();
-  renderPrayers();
-  renderMemorials();
+function shortDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// ─── Detail View ───
+function photoSource(m) {
+  const src = m.photo || 'images/chrysanthemum.jpg';
+  return /^(images\/|data:image\/|https?:\/\/|blob:)/i.test(src) ? src : 'images/chrysanthemum.jpg';
+}
 
-function showDetail(id) {
-  const memorials = loadMemorials();
-  const m = memorials.find(x => x.id === id);
-  if (!m) return;
+function photoHTML(m, large = false) {
+  return `<span class="wood-frame${large ? ' large-frame' : ''}"><span class="photo-mat"><img src="${escapeHTML(photoSource(m))}" alt="${escapeHTML(m.photo ? m.name : `White chrysanthemum in remembrance of ${m.name}`)}" ${large ? 'fetchpriority="high"' : 'loading="lazy"'}></span></span>`;
+}
 
-  const modal = document.getElementById('detail-modal');
-  const body = document.getElementById('detail-body');
-
-  const detailSrc = m.photo || 'images/chrysanthemum.jpg';
-  const photoHTML = `<div class="detail-photo-wrapper">
-    <img class="detail-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
+// Incense remains separate from the environment. The smoke is slow animated linework.
+function createSmokeHTML() {
+  return `<div class="incense-object" role="img" aria-label="Three incense sticks burning quietly in a ceramic bowl">
+    <svg class="incense-smoke" viewBox="0 0 180 300" fill="none" aria-hidden="true">
+      <g class="smoke-thread smoke-a"><path pathLength="100" d="M70 300 C64 268 96 259 77 229 S51 182 79 149 S101 100 72 67 S82 22 77 0"/><path pathLength="100" d="M71 300 C77 266 58 252 82 218 S103 175 78 148 S59 91 87 61 S69 23 83 0"/></g>
+      <g class="smoke-thread smoke-b"><path pathLength="100" d="M90 300 C102 268 73 250 88 222 S111 177 90 146 S64 99 88 70 S103 28 88 0"/><path pathLength="100" d="M91 300 C85 271 105 246 92 218 S74 174 96 143 S111 93 89 56 S98 19 94 0"/></g>
+      <g class="smoke-thread smoke-c"><path pathLength="100" d="M110 300 C106 263 126 252 109 225 S83 177 110 145 S127 92 109 62 S116 21 109 0"/></g>
+    </svg>
+    <span class="incense-stick stick-one"></span><span class="incense-stick stick-two"></span><span class="incense-stick stick-three"></span>
+    <img class="ceramic-bowl" src="images/environment/ceramic-bowl.webp" alt="" aria-hidden="true">
   </div>`;
-
-  if (!m.deathDate) {
-    body.innerHTML = `
-      ${photoHTML}
-      <div class="detail-name">${escapeHTML(m.name)}</div>
-      <div class="detail-incense">${createSmokeHTML(5)}</div>
-    `;
-    modal.classList.remove('hidden');
-    return;
-  }
-
-  const d = new Date(m.deathDate + 'T00:00:00');
-  const days = daysSinceDeath(m.deathDate);
-
-  const ritualItems = getRitualsFor(m).map(r => {
-    const rDate = getRitualDate(m.deathDate, r);
-    const status = getRitualStatus(rDate);
-    const diff = daysBetween(new Date(), rDate);
-    let countdown = '';
-    if (status === 'past') {
-      countdown = `<div class="ritual-passed">Observed</div>`;
-    } else if (diff === 0) {
-      countdown = `<div class="ritual-countdown">Today</div>`;
-    } else {
-      countdown = `<div class="ritual-countdown">${diff} day${diff === 1 ? '' : 's'} from now</div>`;
-    }
-    return `
-      <div class="ritual-item">
-        <div class="ritual-marker ${status}"></div>
-        <div class="ritual-info">
-          <div class="ritual-label">${r.label}<span class="ritual-label-kr">${r.korean}</span></div>
-          <div class="ritual-date-line">${formatDate(rDate)}</div>
-          ${countdown}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const nextAnnual = getNextAnnualMemorial(m.deathDate);
-  const annualDiff = daysBetween(new Date(), nextAnnual);
-
-  body.innerHTML = `
-    ${photoHTML}
-    <div class="detail-name">${escapeHTML(m.name)}</div>
-    <div class="detail-date">${formatDate(d)}</div>
-    <div class="detail-days">${days} day${days === 1 ? '' : 's'} since passing</div>
-    <div class="detail-incense">${createSmokeHTML(5)}</div>
-    <div class="ritual-timeline">
-      <h3>Memorial Rites</h3>
-      ${ritualItems}
-    </div>
-    <div class="annual-section">
-      <h3>Annual Memorial (기일)</h3>
-      <div class="annual-date">${formatDate(nextAnnual)}</div>
-      <div class="annual-countdown">${annualDiff === 0 ? 'Today' : `${annualDiff} day${annualDiff === 1 ? '' : 's'} away`}</div>
-    </div>
-  `;
-
-  modal.classList.remove('hidden');
 }
-
-// ─── Helpers ───
-
-function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// ─── Init ───
-
-// ─── Memorial Navigation Order ───
 
 function getMemorialOrder() {
-  const all = loadMemorials();
-  const people = all.filter(m => m.kind !== 'pet');
-  const pets = all.filter(m => m.kind === 'pet');
-  return [...people, ...pets];
+  return loadMemorials().sort((a, b) => (b.deathDate || '').localeCompare(a.deathDate || ''));
 }
 
 function getNeighbors(id) {
-  const order = getMemorialOrder();
-  const idx = order.findIndex(m => m.id === id);
-  if (idx === -1) return { prev: null, next: null };
-  const prev = idx > 0 ? order[idx - 1] : order[order.length - 1];
-  const next = idx < order.length - 1 ? order[idx + 1] : order[0];
-  return { prev, next };
+  const all = getMemorialOrder();
+  const i = all.findIndex(m => m.id === id);
+  if (i < 0 || all.length < 2) return { prev: null, next: null };
+  return { prev: all[(i - 1 + all.length) % all.length], next: all[(i + 1) % all.length] };
 }
 
-// ─── Detail Page (full-page view for shareable links) ───
+function getUpcomingObservances() {
+  const upcoming = [];
+  loadMemorials().forEach(m => {
+    if (!m.deathDate) return;
+    getRitualsFor(m).forEach(r => {
+      const date = getRitualDate(m.deathDate, r);
+      const diff = daysBetween(new Date(), date);
+      if (diff >= 0) upcoming.push({ m, r, date, diff });
+    });
+    const date = getNextAnnualMemorial(m.deathDate);
+    // Year-one and year-three anniversaries are already represented by their rites.
+    if (!upcoming.some(o => o.m.id === m.id && localDateString(o.date) === localDateString(date))) {
+      upcoming.push({ m, r: { key: 'annual', label: 'Annual memorial', korean: '기일' }, date, diff: daysBetween(new Date(), date) });
+    }
+  });
+  return upcoming.sort((a, b) => a.date - b.date);
+}
+
+function ritualButton(m, r, date, showName = false, next = false) {
+  const diff = daysBetween(new Date(), date);
+  return `<button class="observance${diff < 0 ? ' past' : ''}${next ? ' next-observance' : ''}${diff === 0 ? ' today' : ''}" data-observance="${escapeHTML(r.key)}" data-memorial="${escapeHTML(m.id)}" aria-label="${escapeHTML(m.name)}, ${escapeHTML(r.label)}, ${formatDate(date)}${diff === 0 ? ', today' : ''}. Calendar options" aria-haspopup="dialog">
+    <time datetime="${localDateString(date)}">${shortDate(date)}</time>
+    ${showName ? `<span class="observance-name">${escapeHTML(m.name)}</span>` : ''}
+    <span class="observance-day">${r.label.toLowerCase()}${diff === 0 ? ' · today' : ''}</span>
+  </button>`;
+}
+
+function renderObservancesHTML(m) {
+  const rites = getSevenDayObservances(m);
+  if (!rites.length) return '<p class="unknown-date">Date of passing not recorded</p>';
+  const next = rites.find(r => daysBetween(new Date(), getRitualDate(m.deathDate, r)) >= 0);
+  return `<section class="individual-observances" aria-label="Seven memorial observances"><div class="observance-list">${rites.map(r => ritualButton(m, r, getRitualDate(m.deathDate, r), false, r === next)).join('')}</div></section>`;
+}
+
+function renderMemorials() {
+  const memorials = getMemorialOrder();
+  const shelf = document.getElementById('memorials');
+  shelf.innerHTML = memorials.length ? memorials.map(m => `<a class="memorial-portrait" href="#${encodeURIComponent(m.id)}" data-id="${escapeHTML(m.id)}" aria-label="Visit ${escapeHTML(m.name)}'s memorial">${photoHTML(m)}<span class="memorial-name">${escapeHTML(m.name)}</span></a>`).join('') : '<p class="empty-shelf">No memorials are visible. <button class="text-button" data-open-care>Tend this space</button></p>';
+  updateShelfEdges();
+}
+
+function updateShelfEdges() {
+  const shelf = document.getElementById('memorials');
+  document.querySelector('.shelf-prev').disabled = shelf.scrollLeft <= 2;
+  document.querySelector('.shelf-next').disabled = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 2;
+}
+
+function renderNextCeremony() {
+  const upcoming = getUpcomingObservances().slice(0, 9);
+  document.getElementById('next-ceremony').innerHTML = `<h2>Upcoming Observances</h2><div class="observance-list">${upcoming.length ? upcoming.map((o, i) => ritualButton(o.m, o.r, o.date, true, i === 0)).join('') : '<p class="muted">No upcoming observances.</p>'}</div>`;
+}
+
+function renderPrayers() {
+  const prayers = loadPrayers();
+  document.getElementById('prayer-list').innerHTML = prayers.length ? prayers.map(p => `<div class="prayer-item"><div><p class="prayer-category">${escapeHTML(p.category)}</p>${p.detail ? `<p class="prayer-detail">${escapeHTML(p.detail)}</p>` : ''}</div><button class="prayer-remove" data-prayer-delete="${escapeHTML(p.id)}" aria-label="Remove intention: ${escapeHTML(p.category)}">×</button></div>`).join('') : '<p class="muted">No prayer intentions yet.</p>';
+}
+
+function renderManagement() {
+  document.getElementById('management-list').innerHTML = getMemorialOrder().map(m => `<div class="management-row"><a href="#${encodeURIComponent(m.id)}" data-close>${escapeHTML(m.name)}</a><button class="text-button" data-delete="${escapeHTML(m.id)}" aria-label="${PERMANENT_MEMORIALS.some(p => p.id === m.id) ? 'Hide' : 'Remove'} ${escapeHTML(m.name)}">${PERMANENT_MEMORIALS.some(p => p.id === m.id) ? 'Hide' : 'Remove'}</button></div>`).join('');
+  const hidden = new Set(getHidden());
+  document.getElementById('hidden-list').innerHTML = PERMANENT_MEMORIALS.filter(m => hidden.has(m.id)).map(m => `<div class="management-row"><span>${escapeHTML(m.name)}</span><button class="text-button" data-restore="${escapeHTML(m.id)}">Restore</button></div>`).join('') || '<p class="muted">No hidden memorials.</p>';
+}
+
+function render() {
+  renderMemorials();
+  renderNextCeremony();
+  renderPrayers();
+  renderManagement();
+}
+
+let activeMemorialId = null;
+let lastHallFocus = null;
 
 function renderDetailPage(id) {
-  const memorials = loadMemorials();
-  const m = memorials.find(x => x.id === id);
-  if (!m) {
-    // Unknown ID — fall back to main view
-    history.replaceState(null, '', window.location.pathname);
-    renderMainView();
-    return;
-  }
-
-  document.querySelector('header').classList.add('hidden');
-  document.querySelector('main').classList.add('hidden');
-  document.getElementById('detail-modal').classList.add('hidden');
-
-  let page = document.getElementById('detail-page');
-  if (!page) {
-    page = document.createElement('div');
-    page.id = 'detail-page';
-    document.body.appendChild(page);
-  }
+  const m = loadMemorials().find(m => m.id === id);
+  if (!m) { history.replaceState(null, '', location.pathname + location.search); renderMainView(); return; }
+  const page = document.getElementById('detail-page');
+  if (activeMemorialId) unwatchFlowers(activeMemorialId);
+  activeMemorialId = m.id;
+  document.getElementById('hall').classList.add('hidden');
   page.classList.remove('hidden');
-
-  const detailSrc = m.photo || 'images/chrysanthemum.jpg';
-
-  let bodyHTML = '';
-
-  const remaining = 3 - getDailyFlowerCount(m.id);
-  const flowerBtnHTML = `
-    <div class="flower-offering" id="flower-offering">
-      <div class="flower-display" id="flower-display"></div>
-      <button class="flower-btn${remaining <= 0 ? ' flower-spent' : ''}" id="flower-btn"
-        ${remaining <= 0 ? 'disabled' : ''}>
-        <span class="flower-icon">✿</span>
-        ${remaining <= 0 ? 'Flowers offered today' : `Leave a flower <span class="flower-remaining">${remaining} left today</span>`}
-      </button>
-    </div>
-  `;
-
-  if (!m.deathDate) {
-    bodyHTML = `
-      <div class="dp-photo-wrapper">
-        <img class="dp-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
-      </div>
-      <div class="dp-name">${escapeHTML(m.name)}</div>
-      <div class="dp-incense">${createSmokeHTML(5)}</div>
-      ${flowerBtnHTML}
-    `;
-  } else {
-    const d = new Date(m.deathDate + 'T00:00:00');
-    const days = daysSinceDeath(m.deathDate);
-
-    const ritualItems = getRitualsFor(m).map(r => {
-      const rDate = getRitualDate(m.deathDate, r);
-      const status = getRitualStatus(rDate);
-      const diff = daysBetween(new Date(), rDate);
-      let countdown = '';
-      if (status === 'past') {
-        countdown = `<div class="ritual-passed">Observed</div>`;
-      } else if (diff === 0) {
-        countdown = `<div class="ritual-countdown">Today</div>`;
-      } else {
-        countdown = `<div class="ritual-countdown">${diff} day${diff === 1 ? '' : 's'} from now</div>`;
-      }
-      return `
-        <div class="ritual-item">
-          <div class="ritual-marker ${status}"></div>
-          <div class="ritual-info">
-            <div class="ritual-label">${r.label}<span class="ritual-label-kr">${r.korean}</span></div>
-            <div class="ritual-date-line">${formatDate(rDate)}</div>
-            ${countdown}
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    const nextAnnual = getNextAnnualMemorial(m.deathDate);
-    const annualDiff = daysBetween(new Date(), nextAnnual);
-
-    bodyHTML = `
-      <div class="dp-photo-wrapper">
-        <img class="dp-photo" src="${detailSrc}" alt="${escapeHTML(m.name)}">
-      </div>
-      <div class="dp-name">${escapeHTML(m.name)}</div>
-      <div class="dp-date">${formatDate(d)}</div>
-      <div class="dp-days">${days} day${days === 1 ? '' : 's'} since passing</div>
-      <div class="dp-incense">${createSmokeHTML(5)}</div>
-      ${flowerBtnHTML}
-      <div class="ritual-timeline">
-        <h3>Memorial Rites</h3>
-        ${ritualItems}
-      </div>
-      <div class="annual-section">
-        <h3>Annual Memorial (기일)</h3>
-        <div class="annual-date">${formatDate(nextAnnual)}</div>
-        <div class="annual-countdown">${annualDiff === 0 ? 'Today' : `${annualDiff} day${annualDiff === 1 ? '' : 's'} away`}</div>
-      </div>
-    `;
-  }
-
-  // Clean up previous memorial
-  if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
-  if (page._keyHandler) document.removeEventListener('keydown', page._keyHandler);
-
+  document.body.classList.add('view-memorial');
+  document.title = `${m.name} — Eternal Incense`;
   const { prev, next } = getNeighbors(m.id);
-
-  page.innerHTML = `
-    <div class="dp-container">
-      <a href="#" class="dp-back" onclick="event.preventDefault(); window.location.hash = '';">← Eternal Incense</a>
-      ${bodyHTML}
-    </div>
-    <button class="dp-nav dp-nav-prev" id="dp-prev" aria-label="Previous">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      <span class="dp-nav-name">${prev ? escapeHTML(prev.name) : ''}</span>
-    </button>
-    <button class="dp-nav dp-nav-next" id="dp-next" aria-label="Next">
-      <span class="dp-nav-name">${next ? escapeHTML(next.name) : ''}</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 6 15 12 9 18"></polyline></svg>
-    </button>
-  `;
-
-  // Wire up flower button
+  page.innerHTML = `<div class="room-stage" aria-hidden="true"></div>
+    <a class="dp-back text-button" href="#">← Eternal Incense</a>
+    <figure class="individual-portrait">${photoHTML(m, true)}<figcaption><h1 id="memorial-name" tabindex="-1">${escapeHTML(m.name)}</h1>${m.deathDate ? `<p class="memorial-date"><time datetime="${m.deathDate}">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</time></p>` : ''}</figcaption></figure>
+    <div class="individual-incense">${createSmokeHTML()}</div>
+    <div id="laid-flowers" class="laid-flowers" aria-hidden="true"></div>
+    <div class="memorial-actions"><button class="text-button" id="flower-btn">Leave a flower</button><span id="flower-display" role="status"></span><button class="text-button" id="remembrance-open" aria-haspopup="dialog">Remembrance & rites</button></div>
+    ${renderObservancesHTML(m)}
+    <nav class="memorial-neighbors" aria-label="Other memorials">${prev ? `<a class="dp-nav dp-nav-prev" href="#${encodeURIComponent(prev.id)}" aria-label="Previous memorial: ${escapeHTML(prev.name)}"><span aria-hidden="true">←</span><span>${escapeHTML(prev.name)}</span></a>` : ''}${next ? `<a class="dp-nav dp-nav-next" href="#${encodeURIComponent(next.id)}" aria-label="Next memorial: ${escapeHTML(next.name)}"><span>${escapeHTML(next.name)}</span><span aria-hidden="true">→</span></a>` : ''}</nav>`;
   const flowerBtn = document.getElementById('flower-btn');
   const flowerDisplay = document.getElementById('flower-display');
-
-  if (flowerBtn) {
-    flowerBtn.addEventListener('click', () => {
-      leaveFlower(m.id);
-      const left = 3 - getDailyFlowerCount(m.id);
-      if (left <= 0) {
-        flowerBtn.classList.add('flower-spent');
-        flowerBtn.disabled = true;
-        flowerBtn.innerHTML = '<span class="flower-icon">✿</span> Flowers offered today';
-      } else {
-        flowerBtn.innerHTML = `<span class="flower-icon">✿</span> Leave a flower <span class="flower-remaining">${left} left today</span>`;
-      }
-    });
+  const laidFlowers = document.getElementById('laid-flowers');
+  let offeredHere = false;
+  let shownCount = 0;
+  function refreshFlowerButton() {
+    const left = Math.max(0, 3 - getDailyFlowerCount(m.id));
+    const pending = pendingFlowerOfferings.has(m.id);
+    flowerBtn.disabled = left === 0 || pending;
+    flowerBtn.textContent = pending ? 'Offering…' : left ? (offeredHere ? 'Offer another flower' : 'Leave a flower') : 'Flowers offered today';
+    flowerBtn.setAttribute('aria-label', left ? `Leave a flower for ${m.name}. ${left} remaining today.` : `Three flowers offered for ${m.name} today`);
   }
-
-  // Watch for real-time flower count
+  function showFlowers(count) {
+    shownCount = count;
+    const visible = Math.min(Math.max(0, count), 3);
+    laidFlowers.innerHTML = Array.from({ length: visible }, (_, i) => `<img class="laid-flower flower-${i}" src="images/environment/offered-flower.webp" alt="">`).join('');
+    flowerDisplay.textContent = offeredHere ? `Flower offered · ${count} in remembrance` : count ? `${count} flower${count === 1 ? '' : 's'} offered` : '';
+  }
+  refreshFlowerButton();
+  flowerBtn.addEventListener('click', async () => {
+    flowerBtn.disabled = true;
+    flowerBtn.textContent = 'Offering…';
+    flowerBtn.setAttribute('aria-busy', 'true');
+    flowerDisplay.textContent = 'Placing your flower…';
+    const slowNotice = setTimeout(() => { flowerDisplay.textContent = 'Still saving your flower. Please keep this page open.'; }, 8000);
+    try {
+      const count = await leaveFlower(m.id);
+      offeredHere = true;
+      showFlowers(count);
+      laidFlowers.classList.remove('just-offered');
+      void laidFlowers.offsetWidth;
+      laidFlowers.classList.add('just-offered');
+      announce(`A flower offered for ${m.name}. ${3 - getDailyFlowerCount(m.id)} remaining today.`);
+    } catch (e) {
+      showFlowers(shownCount);
+      flowerDisplay.textContent = e.message;
+    } finally {
+      clearTimeout(slowNotice);
+      flowerBtn.removeAttribute('aria-busy');
+      refreshFlowerButton();
+      if (activeMemorialId === m.id && !flowerBtn.isConnected) renderDetailPage(m.id);
+    }
+  });
   watchFlowers(m.id, count => {
-    if (!flowerDisplay) return;
-    if (count === 0) {
-      flowerDisplay.innerHTML = '';
-      return;
-    }
-    const visible = Math.min(count, 30);
-    let flowers = '';
-    for (let i = 0; i < visible; i++) {
-      flowers += '<span class="flower-laid">✿</span>';
-    }
-    const moreText = count > 30 ? `<span class="flower-more">+${count - 30}</span>` : '';
-    flowerDisplay.innerHTML = flowers + moreText +
-      `<div class="flower-count">${count} flower${count === 1 ? '' : 's'} offered</div>`;
-  });
-
-  page.dataset.watching = m.id;
-
-  // Prev/next navigation
-  document.getElementById('dp-prev').addEventListener('click', () => {
-    if (prev) window.location.hash = prev.id;
-  });
-  document.getElementById('dp-next').addEventListener('click', () => {
-    if (next) window.location.hash = next.id;
-  });
-
-  // Swipe support
-  let touchStartX = 0;
-  let touchStartY = 0;
-  page.addEventListener('touchstart', e => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-  page.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-    if (dx > 0 && prev) window.location.hash = prev.id;
-    if (dx < 0 && next) window.location.hash = next.id;
-  }, { passive: true });
-
-  // Keyboard arrows
-  page._keyHandler = (e) => {
-    if (e.key === 'ArrowLeft' && prev) window.location.hash = prev.id;
-    if (e.key === 'ArrowRight' && next) window.location.hash = next.id;
-  };
-  document.addEventListener('keydown', page._keyHandler);
+    if (activeMemorialId !== m.id) return;
+    // Firebase emits optimistic transaction events; show a saved confirmation only after commit.
+    if (!pendingFlowerOfferings.has(m.id)) showFlowers(count);
+  }, () => { flowerDisplay.textContent = 'Flower offerings could not be loaded. Please reconnect and try again.'; });
+  document.getElementById('remembrance-open').addEventListener('click', () => openRemembrance(m));
+  document.getElementById('memorial-name').focus({ preventScroll: true });
 }
 
 function renderMainView() {
-  document.querySelector('header').classList.remove('hidden');
-  document.querySelector('main').classList.remove('hidden');
-  const page = document.getElementById('detail-page');
-  if (page) {
-    if (page.dataset.watching) unwatchFlowers(page.dataset.watching);
-    if (page._keyHandler) document.removeEventListener('keydown', page._keyHandler);
-    page.classList.add('hidden');
-  }
+  if (activeMemorialId) unwatchFlowers(activeMemorialId);
+  activeMemorialId = null;
+  document.getElementById('hall').classList.remove('hidden');
+  document.getElementById('detail-page').classList.add('hidden');
+  document.body.classList.remove('view-memorial');
+  document.title = 'Eternal Incense';
   render();
+  if (lastHallFocus) document.querySelector(`[data-id="${CSS.escape(lastHallFocus)}"]`)?.focus({ preventScroll: true });
 }
 
 function handleRouting() {
-  const hash = window.location.hash.slice(1);
-  if (hash) {
-    renderDetailPage(hash);
-  } else {
-    renderMainView();
-  }
+  document.querySelectorAll('dialog[open]').forEach(d => d.close());
+  let hash;
+  try { hash = decodeURIComponent(location.hash.slice(1)); } catch { hash = ''; }
+  if (hash) renderDetailPage(hash); else renderMainView();
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
+function announce(message) { document.getElementById('status-message').textContent = message; }
+function openDialog(id) { document.getElementById(id).showModal(); }
+
+function findRitual(m, key) {
+  if (key === 'annual') return { key: 'annual', label: 'Annual memorial', korean: '기일' };
+  return [...getSevenDayObservances(m), ...getRitualsFor(m)].find(r => r.key === key);
+}
+
+function openObservance(id, key) {
+  const m = loadMemorials().find(m => m.id === id);
+  if (!m?.deathDate) return;
+  const r = findRitual(m, key);
+  if (!r) return;
+  const date = key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r);
+  document.getElementById('observance-body').innerHTML = `<h2 id="observance-title">${escapeHTML(r.label)}</h2><p class="ritual-korean" lang="ko">${r.korean}</p><p class="observance-full-date">${formatDate(date)}</p><a class="observance-memorial-link" href="#${encodeURIComponent(m.id)}" data-close>${escapeHTML(m.name)}</a><button class="btn-primary" id="export-observance">Add to calendar</button><button class="text-button" id="export-memorial">All observances for ${escapeHTML(m.name)}</button>`;
+  document.getElementById('export-observance').addEventListener('click', () => downloadICS(m.id, r));
+  document.getElementById('export-memorial').addEventListener('click', () => downloadICS(m.id));
+  openDialog('observance-dialog');
+}
+
+function openRemembrance(m) {
+  const family = m.family ? loadMemorials().filter(other => other.family === m.family && other.id !== m.id) : [];
+  const rites = m.deathDate ? [...RITUALS.slice(1), { key: 'annual', label: 'Annual memorial', korean: '기일' }] : [];
+  document.getElementById('remembrance-body').innerHTML = `<h2 id="remembrance-heading">${escapeHTML(m.name)}</h2>${m.remembrance ? `<p class="remembrance-text">${escapeHTML(m.remembrance)}</p>` : ''}${m.deathDate ? `<p class="muted">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</p>` : '<p class="muted">Date of passing not recorded.</p>'}${rites.length ? `<h3>Further observances</h3><div class="further-rites">${rites.map(r => ritualButton(m, r, r.key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r))).join('')}</div><button class="text-button" id="memorial-calendar">Add observances to calendar</button>` : ''}${family.length ? `<h3>${escapeHTML(m.family)} family</h3><div class="family-links">${family.map(other => `<a href="#${encodeURIComponent(other.id)}" data-close>${escapeHTML(other.name)}</a>`).join('')}</div>` : ''}`;
+  document.getElementById('memorial-calendar')?.addEventListener('click', () => downloadICS(m.id));
+  openDialog('remembrance-drawer');
+}
+
+// ─── Existing storage and interactions ───
 function init() {
   initFirebase();
-
-  // Migrate old localStorage format if present
   const oldKey = 'eternal-incense-memorials';
   const oldData = localStorage.getItem(oldKey);
   if (oldData) {
     try {
       const old = JSON.parse(oldData);
-      // Move any non-seed entries to user-added
-      const seedIds = new Set(PERMANENT_MEMORIALS.map(m => m.id));
-      const oldSeedIds = new Set(old.filter(m => m.id.startsWith('seed-')).map(m => m.id));
-      const userEntries = old.filter(m => !m.id.startsWith('seed-') && !seedIds.has(m.id));
-      if (userEntries.length > 0) setUserAdded(userEntries);
-    } catch {}
-    localStorage.removeItem(oldKey);
-    localStorage.removeItem('eternal-incense-seeded');
+      const permanentIds = new Set(PERMANENT_MEMORIALS.map(m => m.id));
+      const existing = getUserAdded();
+      const existingIds = new Set(existing.map(m => m.id));
+      const migrated = old.filter(m => !m.id.startsWith('seed-') && !permanentIds.has(m.id) && !existingIds.has(m.id));
+      setUserAdded([...existing, ...migrated]);
+      localStorage.removeItem(oldKey);
+      localStorage.removeItem('eternal-incense-seeded');
+    } catch (e) { console.warn('Existing memorial data could not be migrated; it has been retained.', e); }
   }
 
-  const addBtn = document.getElementById('add-btn');
-  const calBtn = document.getElementById('calendar-btn');
-  const modal = document.getElementById('modal');
-  const detailModal = document.getElementById('detail-modal');
-  const form = document.getElementById('memorial-form');
-  const cancelBtn = document.getElementById('cancel-btn');
-  const detailClose = document.getElementById('detail-close');
-  const photoInput = document.getElementById('input-photo');
-  const photoPreview = document.getElementById('photo-preview');
-  const uploadPlaceholder = document.getElementById('upload-placeholder');
-  const modalTitle = document.getElementById('modal-title');
-
-  // Prayer list
-  const addPrayerBtn = document.getElementById('add-prayer-btn');
-  const prayerForm = document.getElementById('prayer-form-container');
-  const prayerCancel = document.getElementById('prayer-cancel');
-  const prayerSave = document.getElementById('prayer-save');
-  const prayerCategory = document.getElementById('prayer-category');
-  const prayerDetail = document.getElementById('prayer-detail');
-
-  addPrayerBtn.addEventListener('click', () => {
-    prayerForm.classList.remove('hidden');
-    addPrayerBtn.classList.add('hidden');
-    prayerCategory.focus();
+  document.getElementById('shared-incense').innerHTML = createSmokeHTML();
+  document.getElementById('prayer-open').addEventListener('click', () => openDialog('prayer-drawer'));
+  document.getElementById('care-open').addEventListener('click', () => { renderManagement(); openDialog('care-drawer'); });
+  document.getElementById('calendar-btn').addEventListener('click', () => downloadICS());
+  document.querySelectorAll('dialog').forEach(dialog => {
+    dialog.addEventListener('click', e => { if (e.target === dialog) { const rect = dialog.getBoundingClientRect(); if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) dialog.close(); } });
   });
-
-  prayerCancel.addEventListener('click', () => {
-    prayerForm.classList.add('hidden');
-    addPrayerBtn.classList.remove('hidden');
-    prayerCategory.value = '';
-    prayerDetail.value = '';
-  });
-
-  prayerSave.addEventListener('click', () => {
-    const cat = prayerCategory.value.trim();
-    if (!cat) return;
-    const prayers = loadPrayers();
-    prayers.push({ id: generateId(), category: cat, detail: prayerDetail.value.trim() });
-    savePrayers(prayers);
-    prayerForm.classList.add('hidden');
-    addPrayerBtn.classList.remove('hidden');
-    prayerCategory.value = '';
-    prayerDetail.value = '';
-    renderPrayers();
-  });
-
-  prayerDetail.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); prayerSave.click(); }
-  });
-  prayerCategory.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); prayerDetail.focus(); }
-  });
-
-  document.getElementById('prayer-list').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-prayer-delete]');
-    if (btn) {
-      const id = btn.dataset.prayerDelete;
-      savePrayers(loadPrayers().filter(p => p.id !== id));
-      renderPrayers();
+  document.addEventListener('click', e => {
+    const close = e.target.closest('[data-close]');
+    if (close) close.closest('dialog')?.close();
+    if (e.target.closest('.skip-link')) {
+      e.preventDefault();
+      (activeMemorialId ? document.getElementById('memorial-name') : document.getElementById('memorials')).focus();
     }
+    const observance = e.target.closest('[data-observance]');
+    if (observance) openObservance(observance.dataset.memorial, observance.dataset.observance);
+    const portrait = e.target.closest('.memorial-portrait');
+    if (portrait) lastHallFocus = portrait.dataset.id;
+    if (e.target.closest('[data-open-care]')) openDialog('care-drawer');
+    const remove = e.target.closest('[data-delete]');
+    if (remove) {
+      const m = loadMemorials().find(m => m.id === remove.dataset.delete);
+      if (m && confirm(`Remove memorial for ${m.name}?`)) { removeMemorial(m.id); render(); if (activeMemorialId === m.id) location.hash = ''; }
+    }
+    const restore = e.target.closest('[data-restore]');
+    if (restore) { setHidden(getHidden().filter(id => id !== restore.dataset.restore)); render(); }
   });
 
-  // Calendar export
-  calBtn.addEventListener('click', downloadICS);
-
-  // Memorial form
-  addBtn.addEventListener('click', () => {
-    modalTitle.textContent = 'Add a Loved One';
-    form.reset();
-    photoPreview.classList.add('hidden');
-    uploadPlaceholder.classList.remove('hidden');
-    modal.classList.remove('hidden');
-    document.getElementById('input-name').focus();
+  const shelf = document.getElementById('memorials');
+  const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelector('.shelf-prev').addEventListener('click', () => shelf.scrollBy({ left: -shelf.clientWidth * .8, behavior: reducedMotion() ? 'instant' : 'smooth' }));
+  document.querySelector('.shelf-next').addEventListener('click', () => shelf.scrollBy({ left: shelf.clientWidth * .8, behavior: reducedMotion() ? 'instant' : 'smooth' }));
+  shelf.addEventListener('scroll', updateShelfEdges, { passive: true });
+  window.addEventListener('resize', updateShelfEdges);
+  shelf.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const links = [...shelf.querySelectorAll('a')];
+    const index = links.indexOf(document.activeElement);
+    links[Math.max(0, Math.min(links.length - 1, index + (e.key === 'ArrowRight' ? 1 : -1)))]?.focus();
   });
 
-  cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
-  modal.querySelector('.modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
-  detailModal.querySelector('.modal-backdrop').addEventListener('click', () => detailModal.classList.add('hidden'));
-  detailClose.addEventListener('click', () => detailModal.classList.add('hidden'));
+  const prayerForm = document.getElementById('prayer-form-container');
+  const addPrayer = document.getElementById('add-prayer-btn');
+  addPrayer.addEventListener('click', () => { prayerForm.classList.remove('hidden'); addPrayer.classList.add('hidden'); document.getElementById('prayer-category').focus(); });
+  function closePrayerForm() { prayerForm.classList.add('hidden'); addPrayer.classList.remove('hidden'); prayerForm.reset(); addPrayer.focus(); }
+  document.getElementById('prayer-cancel').addEventListener('click', closePrayerForm);
+  prayerForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const category = document.getElementById('prayer-category').value.trim();
+    if (!category) return;
+    savePrayers([...loadPrayers(), { id: generateId(), category, detail: document.getElementById('prayer-detail').value.trim() }]);
+    renderPrayers(); closePrayerForm();
+  });
+  document.getElementById('prayer-list').addEventListener('click', e => {
+    const button = e.target.closest('[data-prayer-delete]');
+    if (button) { savePrayers(loadPrayers().filter(p => p.id !== button.dataset.prayerDelete)); renderPrayers(); addPrayer.focus(); }
+  });
 
-  photoInput.addEventListener('change', (e) => {
+  const modal = document.getElementById('modal');
+  const form = document.getElementById('memorial-form');
+  const photoInput = document.getElementById('input-photo');
+  const preview = document.getElementById('photo-preview');
+  document.getElementById('add-btn').addEventListener('click', () => {
+    document.getElementById('care-drawer').close(); form.reset(); preview.classList.add('hidden'); preview.removeAttribute('src'); document.getElementById('form-error').textContent = ''; openDialog('modal');
+  });
+  document.getElementById('cancel-btn').addEventListener('click', () => modal.close());
+  photoInput.addEventListener('change', e => {
     const file = e.target.files[0];
+    preview.classList.add('hidden');
+    document.getElementById('form-error').textContent = '';
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = event => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxW = 600, maxH = 450;
-        let w = img.width, h = img.height;
-        if (w > maxW) { h = h * maxW / w; w = maxW; }
-        if (h > maxH) { w = w * maxH / h; h = maxH; }
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        photoPreview.src = canvas.toDataURL('image/jpeg', 0.7);
-        photoPreview.classList.remove('hidden');
-        uploadPlaceholder.classList.add('hidden');
+        const ratio = Math.min(1, 600 / img.width, 450 / img.height);
+        canvas.width = Math.round(img.width * ratio); canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        preview.src = canvas.toDataURL('image/jpeg', .85); preview.classList.remove('hidden');
       };
-      img.src = ev.target.result;
+      img.onerror = () => { document.getElementById('form-error').textContent = 'This photograph could not be opened. Choose another image.'; };
+      img.src = event.target.result;
     };
     reader.readAsDataURL(file);
   });
-
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', e => {
     e.preventDefault();
     const name = document.getElementById('input-name').value.trim();
     const deathDate = document.getElementById('input-date').value;
     if (!name || !deathDate) return;
-
-    const photo = photoPreview.classList.contains('hidden') ? null : photoPreview.src;
-    addMemorial({ id: generateId(), name, deathDate, photo });
-
-    modal.classList.add('hidden');
-    form.reset();
-    photoPreview.classList.add('hidden');
-    uploadPlaceholder.classList.remove('hidden');
-    render();
+    try {
+      addMemorial({ id: generateId(), name, deathDate, photo: preview.classList.contains('hidden') ? null : preview.src });
+      modal.close(); render(); announce(`Memorial added for ${name}.`);
+    } catch { document.getElementById('form-error').textContent = 'There is not enough storage to save this memorial. Try a smaller photograph.'; }
   });
 
-  function handleCardClick(e) {
-    const deleteBtn = e.target.closest('[data-delete]');
-    if (deleteBtn) {
-      e.stopPropagation();
-      const id = deleteBtn.dataset.delete;
-      const memorials = loadMemorials();
-      const m = memorials.find(x => x.id === id);
-      if (m && confirm(`Remove memorial for ${m.name}?`)) {
-        removeMemorial(id);
-        render();
-      }
-      return;
-    }
-    const card = e.target.closest('.memorial-card');
-    if (card) window.location.hash = card.dataset.id;
-  }
-  document.getElementById('memorials-people').addEventListener('click', handleCardClick);
-  document.getElementById('memorials-pets').addEventListener('click', handleCardClick);
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      modal.classList.add('hidden');
-      detailModal.classList.add('hidden');
-    }
+  document.addEventListener('keydown', e => {
+    if (!activeMemorialId || document.querySelector('dialog[open]') || e.target.closest('input, textarea, select, button, a, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
+    const { prev, next } = getNeighbors(activeMemorialId);
+    if (e.key === 'ArrowLeft' && prev) location.hash = prev.id;
+    if (e.key === 'ArrowRight' && next) location.hash = next.id;
+    if (e.key === 'Escape') location.hash = '';
   });
-
-  render();
-
-  // Hash-based routing for shareable individual links
+  let touchStart = null;
+  const page = document.getElementById('detail-page');
+  page.addEventListener('touchstart', e => {
+    if (e.target.closest('button, a, .observance-list, dialog')) { touchStart = null; return; }
+    touchStart = [e.touches[0].clientX, e.touches[0].clientY];
+  }, { passive: true });
+  page.addEventListener('touchend', e => {
+    if (!touchStart || !activeMemorialId) return;
+    const dx = e.changedTouches[0].clientX - touchStart[0], dy = e.changedTouches[0].clientY - touchStart[1];
+    touchStart = null;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx)) return;
+    const { prev, next } = getNeighbors(activeMemorialId);
+    if (dx > 0 && prev) location.hash = prev.id;
+    if (dx < 0 && next) location.hash = next.id;
+  }, { passive: true });
+  render(); handleRouting();
   window.addEventListener('hashchange', handleRouting);
-  // Check if we loaded with a hash
-  if (window.location.hash) {
-    handleRouting();
+  // A space left open overnight should follow the actual ritual day.
+  let currentDay = new Date().toDateString();
+  function refreshDay() {
+    if (currentDay === new Date().toDateString()) return;
+    currentDay = new Date().toDateString();
+    renderNextCeremony();
+    if (activeMemorialId && !document.querySelector('dialog[open]')) renderDetailPage(activeMemorialId);
   }
+  setInterval(refreshDay, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDay(); });
 }
 
 document.addEventListener('DOMContentLoaded', init);

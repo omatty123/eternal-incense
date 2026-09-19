@@ -1,1391 +1,258 @@
-/* ═══════════════════════════════════════════
-   Eternal Incense — 영원한 향
-   Memorial page with perpetual incense
-   ═══════════════════════════════════════════ */
-
+/* Eternal Incense — the room is the interface. */
 :root {
-  --bg: #2a2520;
-  --bg-card: #352f29;
-  --bg-card-hover: #3d362f;
-  --bg-modal: #302a24;
-  --text: #e0d9cf;
-  --text-muted: #9c9389;
-  --text-dim: #6c635a;
-  --gold: #b8960b;
-  --gold-soft: #c9a96e;
-  --ember: #e85d26;
-  --ember-glow: #ff9f5a;
-  --incense-smoke: rgba(200, 190, 175, 0.35);
-  --border: rgba(255, 255, 255, 0.08);
-  --radius: 8px;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Inter', -apple-system, sans-serif;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-weight: 300;
-  line-height: 1.6;
-  min-height: 100vh;
-  overflow-y: auto;
-}
-
-/* ─── Header ─── */
-
-header {
-  padding: 3rem 2rem 1.5rem;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.header-inner {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.header-title {
-  flex-shrink: 0;
-}
-
-header h1 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 2.2rem;
-  color: var(--text);
-  letter-spacing: 0.02em;
-}
-
-.subtitle {
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  color: var(--text-muted);
-  margin-top: 0.15rem;
-  letter-spacing: 0.08em;
-}
-
-.calendar-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background: rgba(184, 150, 11, 0.1);
-  border: 1px solid rgba(184, 150, 11, 0.25);
-  border-radius: var(--radius);
-  color: var(--gold-soft);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 400;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.calendar-btn:hover {
-  background: rgba(184, 150, 11, 0.18);
-  border-color: var(--gold);
-}
-
-.calendar-btn svg {
-  stroke: var(--gold-soft);
-}
-
-/* ─── Main ─── */
-
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 2rem 4rem;
-}
-
-/* ─── Next Ceremonies ─── */
-
-#next-ceremony:empty {
-  display: none;
-}
-
-.next-ceremony-list {
-  margin-bottom: 1.5rem;
-}
-
-.next-ceremony-heading {
-  font-family: var(--font-serif);
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
-  margin-bottom: 0.5rem;
-}
-
-.next-ceremony-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-  font-size: 0.8rem;
-}
-
-.next-ceremony-row:hover {
-  background: rgba(184, 150, 11, 0.08);
-}
-
-.next-ceremony-days {
-  font-family: var(--font-serif);
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: var(--gold);
-  min-width: 36px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.next-ceremony-detail {
-  color: var(--text);
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.next-ceremony-korean {
-  color: var(--text-dim);
-  font-size: 0.75rem;
-}
-
-.next-ceremony-for {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  flex: 1;
-}
-
-.next-ceremony-date {
-  color: var(--text-dim);
-  font-size: 0.7rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-@media (max-width: 600px) {
-  .next-ceremony-date {
-    display: none;
-  }
-}
-
-/* ─── Alerts ─── */
-
-#alerts {
-  margin-bottom: 1.5rem;
-}
-
-.alert {
-  background: rgba(184, 150, 11, 0.08);
-  border-left: 3px solid var(--gold);
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--gold-soft);
-  border-radius: 0 var(--radius) var(--radius) 0;
-}
-
-.alert strong {
-  font-weight: 500;
-}
-
-/* ─── Section Headings ─── */
-
-.section-heading {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 1.3rem;
-  color: var(--text);
-  margin-bottom: 1.25rem;
-  letter-spacing: 0.02em;
-}
-
-.section-sub {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 300;
-  color: var(--text-dim);
-  margin-left: 0.6rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-/* ─── Prayer Niche ─── */
-
-.prayer-niche {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.8rem 1rem;
-  width: 280px;
-  flex-shrink: 0;
-}
-
-.prayer-heading {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 1rem;
-  color: var(--text-muted);
-  margin-bottom: 0.6rem;
-  letter-spacing: 0.04em;
-}
-
-.prayer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.5rem;
-}
-
-.prayer-item {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.35rem 0.5rem;
-  border-left: 2px solid var(--gold);
-  position: relative;
-}
-
-.prayer-item:hover .prayer-remove {
-  opacity: 1;
-}
-
-.prayer-category {
-  font-size: 0.8rem;
-  color: var(--text);
-  font-weight: 400;
-}
-
-.prayer-detail {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.prayer-remove {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  font-size: 0.85rem;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
-  padding: 0.2rem 0.4rem;
-}
-
-.prayer-remove:hover {
-  color: #e85d56;
-}
-
-.add-prayer-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 0.3rem 0;
-  transition: color 0.2s;
-}
-
-.add-prayer-btn:hover {
-  color: var(--gold-soft);
-}
-
-.prayer-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 0.5rem;
-}
-
-.prayer-form.hidden {
-  display: none;
-}
-
-.prayer-form input {
-  padding: 0.45rem 0.7rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  outline: none;
-  flex: 1;
-  min-width: 80px;
-}
-
-.prayer-form input:focus {
-  border-color: var(--gold);
-}
-
-.prayer-form-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.75rem;
-}
-
-/* ─── Memorial Section ─── */
-
-.memorial-section {
-  margin-bottom: 2rem;
-}
-
-/* ─── Memorial Grid ─── */
-
-.memorial-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-/* ─── Memorial Card ─── */
-
-.memorial-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  position: relative;
-}
-
-.memorial-card:hover {
-  background: var(--bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.card-photo-wrapper {
-  position: relative;
-  overflow: hidden;
-}
-
-.card-photo {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  display: block;
-  filter: grayscale(0.15) brightness(0.9);
-}
-
-.card-photo-placeholder {
-  display: none;
-}
-
-/* ─── Photo Frame ─── */
-
-.card-photo-wrapper {
-  position: relative;
-  border-bottom: 1px solid var(--border);
-}
-
-.card-photo {
-  border: 6px solid #000;
-  background: #000;
-  object-fit: contain;
-}
-
-.detail-photo-wrapper {
-  margin-bottom: 1.5rem;
-}
-
-.detail-photo {
-  border: 6px solid #000;
-  background: #000;
-  object-fit: contain;
-}
-
-.card-body {
-  padding: 1.25rem;
-}
-
-.card-name {
-  font-family: var(--font-serif);
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: var(--text);
-  margin-bottom: 0.25rem;
-}
-
-.card-date {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
-.family-members {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid var(--border);
-}
-
-.family-member {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.6rem;
-}
-
-.family-member-name {
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  color: var(--text);
-}
-
-.family-member-name::before {
-  content: '\2740';
-  margin-right: 0.35rem;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-}
-
-/* ─── Mini Incense ─── */
-
-.mini-incense {
-  position: relative;
-  width: 20px;
-  height: 32px;
-  flex-shrink: 0;
-}
-
-.mini-stick {
-  position: absolute;
-  bottom: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1.5px;
-  height: 18px;
-  background: linear-gradient(to top, #8B7355, #a08060);
-  border-radius: 1px;
-}
-
-.mini-stick::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 3px;
-  height: 3px;
-  background: var(--ember);
-  border-radius: 50%;
-  box-shadow: 0 0 4px var(--ember), 0 0 8px var(--ember-glow);
-  animation: ember-pulse 2s ease-in-out infinite;
-}
-
-.mini-bowl {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 6px;
-  background: linear-gradient(180deg, #6b5f4f 0%, #4a3f33 100%);
-  border-radius: 0 0 40% 40% / 0 0 100% 100%;
-}
-
-.mini-bowl::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  height: 3px;
-  background: linear-gradient(180deg, #8a7d6b 0%, #6b5f4f 100%);
-  border-radius: 2px;
-}
-
-.mini-smoke {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  width: 2px;
-  height: 2px;
-  background: var(--incense-smoke);
-  border-radius: 50%;
-  filter: blur(1px);
-  animation: mini-smoke-rise var(--duration, 3s) ease-out infinite;
-  animation-delay: var(--delay, 0s);
-}
-
-@keyframes mini-smoke-rise {
-  0% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateX(var(--drift1, 3px)) translateY(-10px) scale(1.5);
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateX(var(--drift2, -2px)) translateY(-18px) scale(2);
-    opacity: 0;
-  }
-}
-
-/* ─── Incense ─── */
-
-.incense-container {
-  position: relative;
-  height: 85px;
-  margin-bottom: 0.5rem;
-}
-
-/* The bowl sits at the bottom center */
-.incense-holder {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.holder-bowl {
-  width: 48px;
-  height: 14px;
-  background: linear-gradient(180deg, #6b5f4f 0%, #4a3f33 100%);
-  border-radius: 0 0 40% 40% / 0 0 100% 100%;
-  position: relative;
-}
-
-.holder-bowl::before {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -4px;
-  right: -4px;
-  height: 6px;
-  background: linear-gradient(180deg, #8a7d6b 0%, #6b5f4f 100%);
-  border-radius: 4px;
-}
-
-.holder-bowl::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 8px;
-  right: 8px;
-  height: 5px;
-  background: radial-gradient(ellipse, #9a9288 0%, #7a7068 100%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-.holder-base {
-  width: 32px;
-  height: 5px;
-  background: linear-gradient(180deg, #4a3f33 0%, #3a3028 100%);
-  border-radius: 0 0 3px 3px;
-  margin: -1px auto 0;
-}
-
-/* Sticks rise from the bowl */
-.incense-sticks {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-  z-index: 1;
-}
-
-.incense-stick {
-  width: 2px;
-  height: 38px;
-  background: linear-gradient(to top, #8B7355, #a08060);
-  border-radius: 1px;
-  position: relative;
-}
-
-.incense-stick:nth-child(1) { transform: rotate(-6deg); }
-.incense-stick:nth-child(2) { transform: rotate(0deg); }
-.incense-stick:nth-child(3) { transform: rotate(5deg); }
-
-.incense-stick::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: var(--ember);
-  border-radius: 50%;
-  box-shadow: 0 0 6px var(--ember), 0 0 12px var(--ember-glow);
-  animation: ember-pulse 2s ease-in-out infinite;
-}
-
-/* Smoke rises from above the sticks */
-.smoke-container {
-  position: absolute;
-  bottom: 48px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 50px;
-  pointer-events: none;
-}
-
-.smoke {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 3px;
-  height: 3px;
-  background: var(--incense-smoke);
-  border-radius: 50%;
-  filter: blur(2px);
-  animation: smoke-rise var(--duration, 4s) ease-out infinite;
-  animation-delay: var(--delay, 0s);
-}
-
-@keyframes smoke-rise {
-  0% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 0.5;
-  }
-  25% {
-    transform: translateX(var(--drift1, 4px)) translateY(-15px) scale(1.8);
-    opacity: 0.35;
-  }
-  50% {
-    transform: translateX(var(--drift2, -3px)) translateY(-30px) scale(2.5);
-    opacity: 0.2;
-  }
-  75% {
-    transform: translateX(var(--drift3, 5px)) translateY(-42px) scale(3);
-    opacity: 0.1;
-  }
-  100% {
-    transform: translateX(var(--drift4, -2px)) translateY(-55px) scale(3.5);
-    opacity: 0;
-  }
-}
-
-@keyframes ember-pulse {
-  0%, 100% {
-    box-shadow: 0 0 4px var(--ember), 0 0 8px rgba(232, 93, 38, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 8px var(--ember), 0 0 16px rgba(255, 159, 90, 0.5);
-  }
-}
-
-/* ─── Ritual badges ─── */
-
-.ritual-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.ritual-badge {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-}
-
-.ritual-badge.upcoming {
-  background: rgba(184, 150, 11, 0.12);
-  color: var(--gold-soft);
-  border: 1px solid rgba(184, 150, 11, 0.2);
-}
-
-.ritual-badge.past {
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-}
-
-.ritual-badge.imminent {
-  background: rgba(184, 150, 11, 0.2);
-  color: var(--gold);
-  border: 1px solid rgba(184, 150, 11, 0.35);
-  animation: gentle-pulse 3s ease-in-out infinite;
-}
-
-@keyframes gentle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-/* ─── Card actions ─── */
-
-.card-actions {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.memorial-card:hover .card-actions {
-  opacity: 1;
-}
-
-.btn-delete {
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  color: var(--text-muted);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  transition: color 0.2s, background 0.2s;
-}
-
-.btn-delete:hover {
-  color: #e85d56;
-  background: rgba(0, 0, 0, 0.8);
-}
-
-/* ─── Add Button ─── */
-
-#add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: 1px dashed var(--text-dim);
-  color: var(--text-muted);
-  padding: 0.7rem 1.2rem;
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 400;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-#add-btn:hover {
-  border-color: var(--gold-soft);
-  color: var(--gold-soft);
-}
-
-#add-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* ─── Modal ─── */
-
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  position: relative;
-  background: var(--bg-modal);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2rem;
-  width: 90%;
-  max-width: 420px;
-}
-
-.modal-content h2 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 1.4rem;
-  margin-bottom: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 0.4rem;
-  letter-spacing: 0.03em;
-}
-
-.form-group input[type="text"],
-.form-group input[type="date"] {
-  width: 100%;
-  padding: 0.6rem 0.8rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus {
-  border-color: var(--gold);
-}
-
-.photo-upload {
-  position: relative;
-  border: 1px dashed var(--text-dim);
-  border-radius: 4px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.photo-upload:hover {
-  border-color: var(--gold-soft);
-}
-
-.photo-upload input[type="file"] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1.5rem;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-}
-
-.upload-placeholder svg {
-  stroke: var(--text-dim);
-}
-
-#photo-preview {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-}
-
-#photo-preview.hidden {
-  display: none;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 0.55rem 1.2rem;
-  border-radius: 4px;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-primary {
-  background: var(--gold);
-  color: #0c0a09;
-  font-weight: 500;
-}
-
-.btn-primary:hover {
-  background: var(--gold-soft);
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-.btn-secondary:hover {
-  border-color: var(--text-muted);
-  color: var(--text);
-}
-
-/* ─── Detail Modal ─── */
-
-.detail-content {
-  position: relative;
-  background: var(--bg-modal);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2.5rem;
-  width: 90%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.detail-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0.25rem;
-  transition: color 0.2s;
-}
-
-.detail-close:hover {
-  color: var(--text);
-}
-
-.detail-photo {
-  width: 100%;
-  object-fit: contain;
-  border-radius: 4px;
-  display: block;
-  filter: grayscale(0.1) brightness(0.92);
-}
-
-.detail-name {
-  font-family: var(--font-serif);
-  font-size: 1.8rem;
-  font-weight: 400;
-  margin-bottom: 0.25rem;
-}
-
-.detail-date {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.detail-days {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-bottom: 2rem;
-}
-
-.detail-incense {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-/* ─── Ritual Timeline ─── */
-
-.ritual-timeline {
-  margin-top: 1rem;
-}
-
-.ritual-timeline h3 {
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
-.ritual-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.ritual-item:last-child {
-  border-bottom: none;
-}
-
-.ritual-marker {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-top: 0.35rem;
-  flex-shrink: 0;
-}
-
-.ritual-marker.past {
-  background: var(--text-dim);
-}
-
-.ritual-marker.upcoming {
-  background: var(--gold);
-  box-shadow: 0 0 6px rgba(184, 150, 11, 0.3);
-}
-
-.ritual-marker.imminent {
-  background: var(--gold);
-  box-shadow: 0 0 8px rgba(184, 150, 11, 0.5);
-  animation: gentle-pulse 2s ease-in-out infinite;
-}
-
-.ritual-info {
-  flex: 1;
-}
-
-.ritual-label {
-  font-size: 0.9rem;
-  color: var(--text);
-  font-weight: 400;
-}
-
-.ritual-label-kr {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-left: 0.4rem;
-}
-
-.ritual-date-line {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-top: 0.15rem;
-}
-
-.ritual-countdown {
-  font-size: 0.75rem;
-  color: var(--gold-soft);
-  margin-top: 0.1rem;
-}
-
-.ritual-passed {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-top: 0.1rem;
-}
-
-/* ─── Annual Memorial ─── */
-
-.annual-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.annual-section h3 {
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.annual-date {
-  font-size: 0.85rem;
-  color: var(--text);
-}
-
-.annual-countdown {
-  font-size: 0.8rem;
-  color: var(--gold-soft);
-  margin-top: 0.2rem;
-}
-
-/* ─── Empty state ─── */
-
-.empty-state {
-  text-align: left;
-  padding: 3rem 0;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  line-height: 1.8;
-}
-
-.empty-state p:first-child {
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-/* ─── Detail Page (shareable individual view) ─── */
-
-#detail-page.hidden {
-  display: none;
-}
-
-.dp-container {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 2.5rem 2rem 4rem;
-}
-
-.dp-back {
-  display: inline-block;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  text-decoration: none;
-  margin-bottom: 2rem;
-  transition: color 0.2s;
-}
-
-.dp-back:hover {
-  color: var(--gold-soft);
-}
-
-.dp-photo-wrapper {
-  margin-bottom: 1.5rem;
-}
-
-.dp-photo {
-  width: 100%;
-  object-fit: contain;
-  border-radius: 4px;
-  display: block;
-  border: 6px solid #000;
-  background: #000;
-  filter: grayscale(0.1) brightness(0.92);
-}
-
-.dp-name {
-  font-family: var(--font-serif);
-  font-size: 2rem;
-  font-weight: 400;
-  margin-bottom: 0.25rem;
-}
-
-.dp-date {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.dp-days {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-bottom: 2rem;
-}
-
-.dp-incense {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-/* ─── Flower Offerings ─── */
-
-.flower-offering {
-  margin: 1.5rem 0;
-  padding: 1.25rem 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.flower-display {
-  min-height: 0;
-}
-
-.flower-laid {
-  display: inline-block;
-  font-size: 1.8rem;
-  margin: 0 2px;
-  color: #f0d8a8;
-  text-shadow: 0 0 8px rgba(240, 216, 168, 0.4);
-  animation: flower-appear 0.4s ease-out;
-}
-
-.flower-laid:nth-child(odd) {
-  font-size: 1.6rem;
-  color: #e8c88a;
-}
-
-.flower-laid:nth-child(3n) {
-  color: #f5e0b8;
-  text-shadow: 0 0 10px rgba(245, 224, 184, 0.5);
-}
-
-@keyframes flower-appear {
-  from { opacity: 0; transform: scale(0.5); }
-  to { opacity: 0.7; transform: scale(1); }
-}
-
-.flower-more {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  margin-left: 0.3rem;
-  vertical-align: middle;
-}
-
-.flower-count {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-top: 0.5rem;
-}
-
-.flower-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-  padding: 0.5rem 1.1rem;
-  background: rgba(212, 184, 150, 0.08);
-  border: 1px solid rgba(212, 184, 150, 0.2);
-  border-radius: var(--radius);
-  color: #d4b896;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.flower-btn:hover:not(:disabled) {
-  background: rgba(212, 184, 150, 0.15);
-  border-color: rgba(212, 184, 150, 0.35);
-}
-
-.flower-btn.flower-spent {
-  color: var(--text-dim);
-  border-color: var(--border);
-  background: transparent;
-  cursor: default;
-}
-
-.flower-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.flower-remaining {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  margin-left: 0.3rem;
-}
-
-/* ─── Detail Page Nav ─── */
-
-.dp-nav {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: rgba(42, 37, 32, 0.85);
-  backdrop-filter: blur(4px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-dim);
-  padding: 0.75rem 0.6rem;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
-  z-index: 10;
-}
-
-.dp-nav:hover {
-  color: var(--gold-soft);
-  border-color: rgba(184, 150, 11, 0.25);
-  background: rgba(42, 37, 32, 0.95);
-}
-
-.dp-nav-prev {
-  left: 0.75rem;
-}
-
-.dp-nav-next {
-  right: 0.75rem;
-}
-
-.dp-nav-name {
-  font-family: var(--font-serif);
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-}
-
-.dp-nav svg {
-  flex-shrink: 0;
-}
-
-@media (max-width: 700px) {
-  .dp-nav-name {
-    display: none;
-  }
-  .dp-nav {
-    padding: 0.6rem;
-  }
-}
-
-header.hidden,
-main.hidden {
-  display: none;
-}
-
-/* ─── Responsive ─── */
-
-@media (max-width: 600px) {
-  header {
-    padding: 2rem 1.25rem 1rem;
-  }
-
-  .header-inner {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .prayer-niche {
-    width: 100%;
-  }
-
-  main {
-    padding: 0 1.25rem 3rem;
-  }
-
-  .memorial-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-content,
-  .detail-content {
-    width: 95%;
-    padding: 1.5rem;
-  }
-
-  header h1 {
-    font-size: 1.8rem;
-  }
+  color-scheme: dark;
+  --ink: #f1ece1;
+  --muted: #c6c8bc;
+  --shadow: #121a17;
+  --line: #d8d9cc38;
+  --type: 'Source Sans 3', 'Noto Sans KR', sans-serif;
+  --korean: 'Noto Sans KR', sans-serif;
+  --room-h: max(680px, 100svh);
+  --scene-w: max(100vw, calc(var(--room-h) * 1.5));
+  --scene-h: max(var(--room-h), 66.6667vw);
+  --scene-x: calc((100vw - var(--scene-w)) / 2);
+  --scene-y: calc((var(--room-h) - var(--scene-h)) / 2);
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--shadow); color: var(--ink); font-family: var(--type); font-size: 18px; line-height: 1.45; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; cursor: pointer; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+button:disabled { cursor: default; }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible, [tabindex="0"]:focus-visible { outline: 1px solid #e4eade; outline-offset: 5px; }
+::selection { background: #b6c3b1; color: #18201c; }
+* { scrollbar-width: thin; scrollbar-color: #bcc3b65c transparent; }
+:lang(ko) { font-family: var(--korean); }
+h1, h2, h3, p, figure { margin: 0; }
+h1, h2, h3 { font-weight: 400; }
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.skip-link { position: fixed; top: 12px; left: 12px; z-index: 100; padding: 12px; background: var(--shadow); transform: translateY(-160%); }
+.skip-link:focus { transform: none; }
+.room { position: relative; isolation: isolate; width: 100%; height: var(--room-h); overflow: hidden; }
+.room-stage { position: absolute; z-index: -2; width: var(--scene-w); height: var(--scene-h); left: var(--scene-x); top: var(--scene-y); background: url('images/environment/hall.webp') center / 100% 100% no-repeat; }
+.room::after { content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none; background: linear-gradient(180deg, #08110e1a, transparent 20%, transparent 72%, #07100dbc 100%); }
+.site-identity { position: absolute; left: max(6.7vw, 36px); top: max(4.2vh, 28px); text-shadow: 0 2px 14px #0008; }
+.site-identity h1 { font-size: clamp(27px, 2.05vw, 38px); font-weight: 300; line-height: 1.2; letter-spacing: .012em; }
+.site-identity p { margin-top: 9px; font-size: clamp(14px, 1.2vw, 20px); letter-spacing: .19em; }
+
+/* Frames share the shelf's physical baseline; overflow belongs to the shelf. */
+.shelf-position { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .145); top: calc(var(--scene-y) + var(--scene-h) * .367); width: calc(var(--scene-w) * .554); height: calc(var(--scene-h) * .2); }
+.memorial-shelf { height: 100%; display: flex; align-items: flex-end; gap: calc(var(--scene-w) * .015); overflow-x: auto; overflow-y: hidden; padding: 12px 10px 7px; scroll-snap-type: x proximity; scrollbar-width: none; }
+.memorial-shelf::-webkit-scrollbar { display: none; }
+.memorial-portrait { display: block; flex: 0 0 calc(var(--scene-w) * .081); color: var(--ink); text-decoration: none; text-align: center; scroll-snap-align: start; transition: transform 400ms ease, filter 400ms ease; }
+.memorial-portrait:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.memorial-portrait:focus-visible { outline-offset: 2px; }
+.wood-frame { display: block; border: 17px solid transparent; border-image: url('images/environment/wood-frame.webp') 22% stretch; filter: drop-shadow(3px 6px 4px #0008); }
+.photo-mat { display: block; position: relative; aspect-ratio: .98; background: #c3baa4; }
+.photo-mat img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.memorial-name { display: block; margin-top: 5px; font-size: clamp(13px, .94vw, 17px); line-height: 1.05; min-height: 2.1em; max-width: 100%; text-wrap: balance; text-shadow: 0 2px 3px #000, 0 0 9px #000; }
+.shelf-edge { position: absolute; z-index: 2; top: 46%; width: 44px; height: 48px; border: 0; background: transparent; color: var(--ink); transition: opacity 200ms; }
+.shelf-edge::after { content: ''; display: block; width: 8px; height: 8px; margin: auto; border-top: 1px solid currentColor; border-right: 1px solid currentColor; transform: rotate(45deg); }
+.shelf-prev { left: -38px; }
+.shelf-prev::after { transform: rotate(-135deg); }
+.shelf-next { right: -38px; }
+.shelf-edge:disabled { opacity: 0; pointer-events: none; }
+.empty-shelf { align-self: center; text-shadow: 0 2px 10px #000; }
+
+/* A photographic ceramic vessel, three live sticks, slow translucent smoke. */
+.shared-incense { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .593); top: calc(var(--scene-y) + var(--scene-h) * .783); width: calc(var(--scene-w) * .122); transform: translate(-50%, -100%); pointer-events: none; }
+.incense-object { position: relative; width: 100%; aspect-ratio: 1 / 1.02; }
+.ceramic-bowl { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; z-index: 2; filter: brightness(.79) drop-shadow(3px 8px 5px #0007); }
+.incense-stick { position: absolute; bottom: 32%; width: 1.5px; height: 56%; background: #ba9155; box-shadow: 1px 0 1px #30251b8c; transform-origin: bottom; }
+.incense-stick::before { content: ''; position: absolute; top: -2px; left: -.15px; width: 2px; height: 3px; border-radius: 50%; background: #ffd8a1; box-shadow: 0 0 4px 1px #de81418c; }
+.stick-one { left: 41%; transform: rotate(-2deg); }
+.stick-two { left: 50%; }
+.stick-three { left: 59%; transform: rotate(2deg); }
+.incense-smoke { position: absolute; width: 93%; height: 160%; bottom: 88%; left: 4%; overflow: visible; mask-image: linear-gradient(to top, #000 0%, #000b 40%, transparent 100%); }
+.smoke-thread { stroke: #f2f3e7; stroke-width: 1.1px; opacity: .34; transform-origin: center bottom; animation: smoke-drift 18s ease-in-out infinite alternate; }
+.smoke-thread path { stroke-linecap: round; stroke-dasharray: 24 76; animation: smoke-rise 16s linear infinite; }
+.smoke-thread path + path { opacity: .5; stroke-width: 1.8px; animation-delay: -8s; filter: blur(.45px); }
+.smoke-b { animation-delay: -9s; animation-duration: 23s; }
+.smoke-b path { animation-delay: -5s; animation-duration: 19s; }
+.smoke-b path + path { animation-delay: -14s; }
+.smoke-c { animation-delay: -4s; animation-duration: 21s; }
+.smoke-c path { animation-delay: -11s; animation-duration: 17s; }
+@keyframes smoke-rise { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+@keyframes smoke-drift { from { transform: translateX(-3px) skewX(-2deg); } to { transform: translateX(6px) skewX(3deg); } }
+
+/* Photographic flowers rest on the same offering surface as the incense. */
+.laid-flowers { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .446); top: calc(var(--scene-y) + var(--scene-h) * .694); width: calc(var(--scene-w) * .09); height: calc(var(--scene-w) * .045); transform: translate(-50%, -100%); pointer-events: none; }
+.laid-flower { position: absolute; width: 100%; left: 0; bottom: 0; transform: rotate(-7deg); filter: brightness(.83) drop-shadow(2px 3px 2px #0006); }
+.laid-flower.flower-1 { left: -18%; bottom: 8%; transform: rotate(12deg) scale(.87); }
+.laid-flower.flower-2 { left: 13%; bottom: -8%; transform: rotate(-18deg) scale(.8); }
+.just-offered .laid-flower:last-child { animation: flower-settle 1.8s ease-out both; }
+@keyframes flower-settle { from { opacity: 0; translate: 0 -7px; } to { opacity: 1; translate: 0 0; } }
+
+/* Observances remain legible, selectable text on the floor of the room. */
+.upcoming-strip { position: absolute; left: 7.7%; right: 7.7%; bottom: 70px; display: flex; align-items: center; gap: 28px; border-top: 1px solid var(--line); padding-top: 15px; text-shadow: 0 2px 7px #000; }
+.upcoming-strip h2 { flex: 0 0 210px; font-size: clamp(17px, 1.25vw, 22px); line-height: 1.2; }
+.observance-list { display: flex; align-items: stretch; overflow-x: auto; min-width: 0; scrollbar-width: none; }
+.observance-list::-webkit-scrollbar { display: none; }
+.observance { position: relative; flex: 1 0 125px; display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 5px 18px 8px; color: #e2e2d6; background: transparent; border: 0; text-align: left; min-height: 68px; text-shadow: inherit; }
+.observance + .observance::before { content: ''; position: absolute; width: 1px; height: 24px; background: var(--line); left: 0; top: 23px; }
+.observance time { font-size: 23px; font-weight: 300; line-height: 1.15; white-space: nowrap; }
+.observance-name { font-size: 14px; line-height: 1.2; white-space: nowrap; }
+.observance-day { font-size: 12px; line-height: 1.35; white-space: nowrap; }
+.observance.past { color: #bcbeb2; }
+.observance.next-observance { color: #fffaf0; }
+.observance.next-observance time { font-weight: 500; }
+.observance.today time::after { content: ''; display: inline-block; margin: 0 0 4px 7px; width: 3px; height: 3px; border-radius: 50%; background: #c6d9c8; }
+.observance:hover { color: #fffef5; }
+.observance:focus-visible { outline-offset: -4px; }
+.quiet-tools { position: absolute; z-index: 3; top: calc(var(--room-h) - 53px); left: 7.7%; right: 7.7%; display: flex; justify-content: space-between; align-items: center; font-size: 15px; text-shadow: 0 2px 5px #000; }
+.text-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 7px 0; border: 0; background: transparent; color: inherit; text-decoration: none; }
+.text-button:hover { text-decoration: underline; text-underline-offset: 5px; }
+.text-button:disabled { color: var(--muted); text-decoration: none; }
+.tool-translation { font-size: 15px; }
+#prayer-open :lang(ko) { font-size: 13px; }
+
+/* The individual place keeps the same camera and material world. */
+.memorial-room .room-stage { background-image: url('images/environment/memorial.webp'); }
+.dp-back { position: absolute; left: 6.7%; top: 30px; font-size: 18px; text-shadow: 0 2px 9px #000; }
+.individual-portrait { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .267); top: calc(var(--scene-y) + var(--scene-h) * .395); width: calc(var(--scene-w) * .189); }
+.large-frame { border-width: 34px; transform: rotate(-1deg); }
+.large-frame .photo-mat { aspect-ratio: .98; }
+.individual-portrait figcaption { text-align: center; padding-top: 10px; text-shadow: 0 2px 6px #000; }
+.individual-portrait h1 { font-size: clamp(23px, 1.9vw, 34px); line-height: 1.12; }
+.individual-portrait h1:focus { outline: none; }
+.memorial-date { font-size: clamp(14px, 1.08vw, 18px); margin-top: 3px; }
+.individual-incense { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .529); top: calc(var(--scene-y) + var(--scene-h) * .685); width: calc(var(--scene-w) * .094); transform: translate(-50%, -100%); pointer-events: none; }
+.memorial-actions { position: absolute; left: calc(var(--scene-x) + var(--scene-w) * .468); top: calc(var(--scene-y) + var(--scene-h) * .704); display: flex; flex-direction: column; align-items: flex-start; font-size: 15px; line-height: 1.2; text-shadow: 0 2px 6px #000; max-width: 250px; }
+.memorial-actions .text-button { min-height: 36px; }
+#flower-display { font-size: 13px; }
+.individual-observances { position: absolute; bottom: 124px; left: 12.5%; right: 12.5%; padding-top: 14px; border-top: 1px solid var(--line); text-shadow: 0 2px 5px #000; }
+.individual-observances .observance { text-align: center; flex-basis: 0; min-width: 102px; gap: 5px; }
+.individual-observances .observance time { font-size: clamp(23px, 1.7vw, 30px); }
+.individual-observances .observance-day { font-family: var(--type); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+.memorial-neighbors { position: absolute; bottom: 67px; left: 7.7%; right: 7.7%; display: flex; justify-content: space-between; gap: 30px; }
+.dp-nav { display: flex; gap: 12px; align-items: center; text-decoration: none; min-height: 44px; font-size: 15px; text-shadow: 0 2px 5px #000; }
+.dp-nav-next { margin-left: auto; text-align: right; }
+.dp-nav:hover { text-decoration: underline; }
+.unknown-date { position: absolute; bottom: 145px; left: 12.5%; font-size: 16px; }
+
+/* Secondary controls: native dialogs provide focus containment and Escape. */
+dialog { color: var(--ink); background: #17201c; border: 1px solid #9aa79945; padding: 46px 34px 34px; max-height: calc(100svh - 32px); overflow: auto; box-shadow: -8px 12px 45px #0006; }
+dialog::backdrop { background: #07100ca8; }
+dialog h2 { font-size: 30px; line-height: 1.2; padding-right: 22px; margin-bottom: 28px; }
+dialog h2 :lang(ko) { font-size: 23px; margin-right: 12px; }
+dialog h2 .muted { display: block; font-size: 19px; margin-top: 9px; }
+dialog h3 { font-size: 23px; margin: 30px 0 12px; }
+.drawer { margin: 0 0 0 auto; width: min(450px, 100%); max-width: 100%; height: 100svh; max-height: 100svh; border-top: 0; border-right: 0; border-bottom: 0; }
+.form-dialog, .observance-dialog { width: min(450px, calc(100% - 32px)); }
+.close-dialog { position: absolute; right: 14px; top: 12px; width: 44px; height: 44px; border: 0; background: transparent; font-size: 27px; color: var(--muted); }
+.muted { color: var(--muted); }
+.prayer-list { margin-bottom: 18px; }
+.prayer-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.prayer-category { font-size: 21px; line-height: 1.3; }
+.prayer-detail { color: var(--muted); font-style: italic; font-size: 18px; margin-top: 6px; }
+.prayer-remove { background: transparent; border: 0; width: 44px; height: 44px; flex-shrink: 0; font-size: 23px; }
+label { display: block; font-size: 17px; margin-bottom: 8px; color: var(--muted); }
+input { width: 100%; min-height: 44px; padding: 10px 12px; background: #111914; border: 1px solid #a0af9b66; color: var(--ink); border-radius: 0; caret-color: #d9e9d3; }
+input::placeholder { color: #bbc3b6; }
+input[type=file] { padding: 8px; font-size: 14px; }
+input::file-selector-button { color: var(--ink); background: #27392d; border: 0; padding: 8px; margin-right: 12px; }
+.form-group, .prayer-form input { margin-bottom: 22px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; }
+.btn-primary, .btn-secondary { padding: 10px 20px; min-height: 44px; border: 1px solid #b6c1ac75; background: transparent; color: var(--ink); }
+.btn-primary { background: #d7decd; color: #18231a; border-color: #d7decd; }
+.btn-primary:hover { background: #e6eadf; }
+.btn-secondary:hover { border-color: #d7decd; }
+#photo-preview { width: 100%; max-height: 190px; object-fit: contain; margin-top: 12px; }
+#form-error { color: #e9c2af; }
+.care-actions { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 22px; }
+.management-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.management-row a { text-decoration: none; }
+.management-row .text-button { font-size: 15px; color: var(--muted); }
+.hidden-memorials { margin-top: 28px; }
+summary { cursor: pointer; min-height: 44px; }
+.hidden-memorials .muted { margin: 10px 0; }
+.ritual-korean { margin-top: -15px; font-size: 16px; color: var(--muted); }
+.observance-full-date { margin: 25px 0 6px; font-size: 26px; }
+.observance-memorial-link { display: block; margin-bottom: 28px; font-size: 22px; }
+.observance-dialog .btn-primary, .observance-dialog .text-button { display: flex; width: 100%; text-align: center; }
+.observance-dialog .text-button { margin-top: 14px; font-size: 17px; }
+.remembrance-text { font-size: 23px; line-height: 1.5; margin-bottom: 18px; }
+.further-rites { display: flex; flex-direction: column; }
+.further-rites .observance { flex: auto; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.further-rites .observance::before { content: none; }
+.family-links { display: flex; flex-direction: column; gap: 16px; }
+
+/* Reserve a quiet lower band even when a wide screen crops the room. */
+@media (min-width: 901px) {
+  .memorial-room { --scene-y: min(calc((var(--room-h) - var(--scene-h)) / 2), calc(var(--room-h) - 310px - var(--scene-h) * .704)); }
+  .individual-portrait h1 { overflow-wrap: anywhere; }
+}
+
+/* Mobile is a closer position inside the room, not a miniature desktop. */
+@media (max-width: 900px) {
+  :root { --room-h: max(850px, 100svh); }
+  body { font-size: 18px; }
+  .room { min-height: var(--room-h); height: auto; }
+  .room-stage { left: 0; top: 0; width: 100%; height: 100%; background-size: auto 850px; background-position: 36% top; }
+  .room::after { background: linear-gradient(180deg, #09100d38, transparent 23%, transparent 53%, #101813ed 90%, #121a17); }
+  .site-identity { left: 28px; top: 29px; }
+  .site-identity h1 { font-size: 29px; }
+  .site-identity p { font-size: 15px; margin-top: 8px; }
+  .shelf-position { left: 0; top: 278px; width: 100%; height: 224px; }
+  .memorial-shelf { gap: 25px; padding: 12px 30px 6px; scroll-padding-left: 30px; }
+  .memorial-portrait { flex-basis: 137px; }
+  .memorial-name { font-size: 15px; margin-top: 7px; }
+  .shelf-edge { top: 77px; width: 30px; background: #10201745; }
+  .shelf-prev { left: 0; }
+  .shelf-next { right: 0; }
+  .shared-incense { left: 62%; top: 664px; width: 136px; }
+  .upcoming-strip { left: 28px; right: 0; bottom: 74px; display: block; padding-top: 12px; }
+  .upcoming-strip h2 { font-size: 19px; margin-bottom: 13px; }
+  .upcoming-strip .observance-list { padding-right: 25px; }
+  .upcoming-strip .observance { flex-basis: 132px; padding-left: 16px; }
+  .upcoming-strip .observance:first-child { padding-left: 0; flex-basis: 116px; }
+  .observance time { font-size: 25px; }
+  .observance-name { font-size: 16px; }
+  .observance-day { font-size: 12px; }
+  .quiet-tools { left: 28px; right: 28px; top: calc(var(--room-h) - 58px); font-size: 15px; }
+  .tool-translation { display: none; }
+  #prayer-open :lang(ko) { font-size: 14px; }
+  .memorial-room { --room-h: max(930px, 100svh); }
+  .view-memorial { --room-h: max(930px, 100svh); }
+  .memorial-room .room-stage { background-size: auto 850px; background-position: 60% -60px; }
+  .dp-back { left: 26px; top: 21px; font-size: 18px; }
+  .individual-portrait { left: max(32px, calc(50% - 170px)); top: 282px; width: 230px; }
+  .large-frame { border-width: 27px; }
+  .individual-portrait h1 { font-size: 25px; }
+  .memorial-date { font-size: 16px; }
+  .individual-portrait figcaption { padding-top: 13px; }
+  .individual-incense { left: calc(50% + 108px); top: 519px; width: 94px; }
+  .laid-flowers { left: calc(50% + 23px); top: 530px; width: 94px; height: 47px; }
+  .memorial-actions { left: 28px; right: 28px; top: 620px; max-width: none; flex-direction: row; justify-content: space-between; flex-wrap: wrap; gap: 2px 18px; }
+  .memorial-actions .text-button { min-height: 44px; font-size: 16px; }
+  #flower-display { order: 3; width: 100%; }
+  .individual-observances { bottom: 156px; left: 28px; right: 0; padding-top: 16px; }
+  .individual-observances .observance-list { padding-right: 28px; }
+  .individual-observances .observance { min-width: 104px; text-align: left; padding-left: 16px; }
+  .individual-observances .observance:first-child { padding-left: 0; min-width: 90px; }
+  .individual-observances .observance time { font-size: 25px; }
+  .memorial-neighbors { left: 28px; right: 28px; bottom: 80px; }
+  .dp-nav { font-size: 15px; max-width: 48%; line-height: 1.2; }
+  .dp-nav span:not([aria-hidden]) { text-wrap: balance; }
+  .unknown-date { left: 28px; bottom: 185px; }
+}
+@media (min-width: 600px) and (max-width: 900px) {
+  .shelf-position { top: 261px; height: 241px; }
+  .memorial-portrait { flex-basis: 150px; }
+  .individual-portrait { left: calc(50% - 210px); width: 250px; top: 262px; }
+  .individual-incense { left: calc(50% + 117px); width: 120px; }
+}
+@media (max-width: 360px) {
+  .individual-portrait { width: 200px; left: 24px; top: 310px; }
+  .individual-incense { left: calc(50% + 92px); width: 83px; }
+  .memorial-actions { font-size: 14px; gap: 0 8px; }
+  .memorial-actions .text-button { font-size: 14px; }
+  .drawer { padding-left: 25px; padding-right: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .smoke-thread { opacity: .21; }
+  .smoke-thread path { stroke-dasharray: none; }
 }
