@@ -92,6 +92,7 @@ const PERMANENT_MEMORIALS = [
   { id: 'p-adam-shannon', name: 'Adam & Shannon',      deathDate: '2015-12-26', photo: 'images/adam-shannon.png', kind: 'person' },
   // Pets — most recent first
   { id: 'p-rhoda',   name: 'Rhoda Howe Rasmussen',    deathDate: '2026-02-26', photo: 'images/rhoda.jpg',  kind: 'pet' },
+  { id: 'p-dae-dexi', name: 'Dae Dexi',                deathDate: '2026-09-18', photo: 'images/dexi.png',  kind: 'pet', weeklyRites: true },
   { id: 'p-friday',  name: 'Friday',                  deathDate: '2025-06-13', photo: null,                kind: 'pet' },
   { id: 'p-bodi',    name: 'Bodi',                    deathDate: '2025-04-28', photo: 'images/bodi.jpg',   kind: 'pet' },
   { id: 'p-minnie',  name: 'Queen Minnie',            deathDate: '2024-08-26', photo: 'images/minnie.jpg', kind: 'pet' },
@@ -106,6 +107,19 @@ const PERMANENT_PRAYERS = [
   { id: 'pp-1', category: 'Parents and especially sick parents', detail: "Mom's eyes" },
   { id: 'pp-2', category: 'Grieving Friends', detail: 'Sara, Magali' },
 ];
+
+// Dae Dexi's early memorial observance includes a reminder every seven days
+// before the established 49th-day rite. Other memorials retain the standard rites.
+function getRitualsFor(memorial) {
+  if (!memorial.weeklyRites) return RITUALS;
+  const weekly = Array.from({ length: 6 }, (_, index) => ({
+    key: `weekly-${index + 1}`,
+    label: `Weekly Rite ${index + 1}`,
+    korean: '칠일재',
+    days: (index + 1) * 7,
+  }));
+  return [...weekly, ...RITUALS];
+}
 
 // ─── Data Layer ───
 // Permanent entries always show unless explicitly hidden.
@@ -255,7 +269,7 @@ function generateICS() {
 
   memorials.forEach(m => {
     // Ritual dates
-    RITUALS.forEach(r => {
+    getRitualsFor(m).forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const diff = daysBetween(now, rDate);
       if (diff >= 0) {
@@ -429,7 +443,7 @@ function renderMemorials() {
   const upcoming = [];
   memorials.forEach(m => {
     if (!m.deathDate) return;
-    RITUALS.forEach(r => {
+    getRitualsFor(m).forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const status = getRitualStatus(rDate);
       if (status === 'imminent') {
@@ -451,7 +465,14 @@ function renderMemorials() {
   }
 
   const people = memorials.filter(m => m.kind !== 'pet');
-  const pets = memorials.filter(m => m.kind === 'pet');
+  const pets = memorials
+    .filter(m => m.kind === 'pet')
+    .sort((a, b) => {
+      if (!a.deathDate && !b.deathDate) return 0;
+      if (!a.deathDate) return 1;
+      if (!b.deathDate) return -1;
+      return b.deathDate.localeCompare(a.deathDate);
+    });
 
   function renderCard(m) {
     const src = m.photo || 'images/chrysanthemum.jpg';
@@ -464,7 +485,7 @@ function renderMemorials() {
     if (m.deathDate) {
       const d = new Date(m.deathDate + 'T00:00:00');
       dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
-      ritualHTML = `<div class="ritual-row">${RITUALS.map(r => {
+      ritualHTML = `<div class="ritual-row">${getRitualsFor(m).map(r => {
         const rDate = getRitualDate(m.deathDate, r);
         const status = getRitualStatus(rDate);
         return `<span class="ritual-badge ${status}">${r.label}</span>`;
@@ -514,7 +535,7 @@ function renderMemorials() {
       if (lead.deathDate) {
         const d = new Date(lead.deathDate + 'T00:00:00');
         dateHTML = `<div class="card-date">${formatDate(d)}</div>`;
-        ritualHTML = `<div class="ritual-row">${RITUALS.map(r => {
+        ritualHTML = `<div class="ritual-row">${getRitualsFor(lead).map(r => {
           const rDate = getRitualDate(lead.deathDate, r);
           const status = getRitualStatus(rDate);
           return `<span class="ritual-badge ${status}">${r.label}</span>`;
@@ -563,7 +584,7 @@ function renderNextCeremony() {
   memorials.forEach(m => {
     if (!m.deathDate) return;
 
-    RITUALS.forEach(r => {
+    getRitualsFor(m).forEach(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const diff = daysBetween(now, rDate);
       if (diff >= 0) {
@@ -637,7 +658,7 @@ function showDetail(id) {
   const d = new Date(m.deathDate + 'T00:00:00');
   const days = daysSinceDeath(m.deathDate);
 
-  const ritualItems = RITUALS.map(r => {
+  const ritualItems = getRitualsFor(m).map(r => {
     const rDate = getRitualDate(m.deathDate, r);
     const status = getRitualStatus(rDate);
     const diff = daysBetween(new Date(), rDate);
@@ -668,7 +689,7 @@ function showDetail(id) {
     ${photoHTML}
     <div class="detail-name">${escapeHTML(m.name)}</div>
     <div class="detail-date">${formatDate(d)}</div>
-    <div class="detail-days">${days} days since passing</div>
+    <div class="detail-days">${days} day${days === 1 ? '' : 's'} since passing</div>
     <div class="detail-incense">${createSmokeHTML(5)}</div>
     <div class="ritual-timeline">
       <h3>Memorial Rites</h3>
@@ -765,7 +786,7 @@ function renderDetailPage(id) {
     const d = new Date(m.deathDate + 'T00:00:00');
     const days = daysSinceDeath(m.deathDate);
 
-    const ritualItems = RITUALS.map(r => {
+    const ritualItems = getRitualsFor(m).map(r => {
       const rDate = getRitualDate(m.deathDate, r);
       const status = getRitualStatus(rDate);
       const diff = daysBetween(new Date(), rDate);
@@ -798,7 +819,7 @@ function renderDetailPage(id) {
       </div>
       <div class="dp-name">${escapeHTML(m.name)}</div>
       <div class="dp-date">${formatDate(d)}</div>
-      <div class="dp-days">${days} days since passing</div>
+      <div class="dp-days">${days} day${days === 1 ? '' : 's'} since passing</div>
       <div class="dp-incense">${createSmokeHTML(5)}</div>
       ${flowerBtnHTML}
       <div class="ritual-timeline">
