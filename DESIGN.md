@@ -73,9 +73,9 @@ The hall title is light and softly spaced. Memorial names use regular weight wit
 
 Desktop presents a full photographic room with a minimum height of 680px. Live objects track the 3:2 scene's coordinates. Portraits share a physical shelf baseline and scroll horizontally to accommodate every record; names are their only shelf metadata.
 
-At widths of 901px and above, the individual room's vertical scene offset is capped to reserve a 360px lower band beneath the action anchor. Preserve this reservation: long names, offering controls, ritual dates and neighbor links must remain separate on laptop and wide screens.
+At widths of 901px and above, the individual room's vertical scene offset is capped to reserve a 310px lower band beneath the action anchor. Preserve this reservation: long names, offering controls, ritual dates and neighbor links must remain separate on laptop and wide screens.
 
-At 900px and below, use a closer viewpoint rather than shrinking the desktop scene. The hall is at least 850px tall and the individual room at least 1000px. Mobile portraits remain substantial, observances scroll horizontally, and actions sit below the portrait. Tablet adjustments cover 600–900px; compact adjustments cover widths through 360px.
+At 900px and below, use a closer viewpoint rather than shrinking the desktop scene. The hall is at least 850px tall and the individual room at least 950px. Mobile portraits remain substantial, hall observances scroll horizontally, and actions sit below the portrait. Tablet adjustments cover 600–900px; compact adjustments cover widths through 360px.
 
 ## Elevation & Depth
 
@@ -89,7 +89,7 @@ Frames are plain, aged wooden squares with ivory mats. Inputs and secondary task
 
 - **Memorial photographs:** real application assets inside a nine-slice photographic wooden frame. Hover lifts a shelf portrait slightly and brightens it. Original photo files remain unchanged; display cropping is CSS only.
 - **Incense:** one photographic ceramic bowl, exactly three live sticks and three delicate SVG smoke groups. Drift lasts 24–32 seconds. Reduced motion removes animation and leaves still smoke.
-- **Observances:** selectable date rows with subtle separators. Past dates remain visible; the next date has greater contrast and weight. Selecting a date opens calendar actions. Individual memorials with known passing dates show seven weekly dates; unknown dates are never fabricated.
+- **Observances:** selectable date rows with subtle separators. Past dates remain visible; the next date has greater contrast and weight. Selecting a date opens calendar actions. Individual memorials with known passing dates show one centered next ritual: a light 23–30px full date above a small uppercase caption. All seven early dates and later rites remain in Remembrance & rites under Ritual dates; unknown dates are never fabricated.
 - **Buttons and navigation:** room actions are transparent text controls with underline on hover. Filled pale actions belong to secondary forms and calendar dialogs. Back and neighboring-memorial links remain quiet and readable.
 - **Drawers and forms:** native dialogs contain prayer intentions, memorial management, remembrance and further rites. Drawers open at the right, up to 450px wide. Fields have green-black fills, fine borders and visible focus; normal controls have at least 44px height, with the existing desktop inline memorial actions at 36px.
 - **Keyboard and focus:** a visible one-pixel pale outline, skip link, semantic controls and native dialog focus containment are part of the design. Reduced motion also disables transitions and smooth scrolling.

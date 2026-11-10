@@ -514,12 +514,10 @@ function ritualButton(m, r, date, showName = false, next = false) {
 }
 
 function renderObservancesHTML(m) {
-  const rites = getSevenDayObservances(m);
-  if (!rites.length) return '<p class="unknown-date">Date of passing not recorded</p>';
-  const next = rites.find(r => daysBetween(new Date(), getRitualDate(m.deathDate, r)) >= 0);
+  if (!m.deathDate) return '<p class="unknown-date">Date of passing not recorded</p>';
   const ceremony = getMemorialUpcomingObservances(m)[0];
   const label = ceremony.r.key === '100day' ? '100 days' : ceremony.r.label.toLowerCase();
-  return `<section class="individual-observances" aria-label="Memorial observances"><button class="memorial-next-ceremony" data-observance="${escapeHTML(ceremony.r.key)}" data-memorial="${escapeHTML(m.id)}" aria-haspopup="dialog"><span>Next ceremony: ${escapeHTML(label)}${ceremony.diff === 0 ? ' · today' : ''}</span> <time datetime="${localDateString(ceremony.date)}">${formatDate(ceremony.date)}</time></button><div class="observance-list">${rites.map(r => ritualButton(m, r, getRitualDate(m.deathDate, r), false, r === next)).join('')}</div></section>`;
+  return `<section class="individual-observances" aria-label="Memorial observances"><button class="observance next-ritual${ceremony.diff === 0 ? ' today' : ''}" data-observance="${escapeHTML(ceremony.r.key)}" data-memorial="${escapeHTML(m.id)}" aria-label="${escapeHTML(m.name)}, ${escapeHTML(ceremony.r.label)}, ${formatDate(ceremony.date)}${ceremony.diff === 0 ? ', today' : ''}. Calendar options" aria-haspopup="dialog"><time datetime="${localDateString(ceremony.date)}">${formatDate(ceremony.date)}</time> <span class="observance-day">Next ritual: ${escapeHTML(label)}${ceremony.diff === 0 ? ' · today' : ''}</span></button></section>`;
 }
 
 function renderMemorials() {
@@ -678,8 +676,8 @@ function openObservance(id, key) {
 
 function openRemembrance(m) {
   const family = m.family ? loadMemorials().filter(other => other.family === m.family && other.id !== m.id) : [];
-  const rites = m.deathDate ? [...RITUALS.slice(1), { key: 'annual', label: 'Annual memorial', korean: '기일' }] : [];
-  document.getElementById('remembrance-body').innerHTML = `<h2 id="remembrance-heading">${escapeHTML(m.name)}</h2>${m.remembrance ? `<p class="remembrance-text">${escapeHTML(m.remembrance)}</p>` : ''}${m.deathDate ? `<p class="muted">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</p>` : '<p class="muted">Date of passing not recorded.</p>'}${rites.length ? `<h3>Further observances</h3><div class="further-rites">${rites.map(r => ritualButton(m, r, r.key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r))).join('')}</div>${subscriptionLink(m)}<button class="text-button" id="memorial-calendar">Download observances</button>` : ''}${family.length ? `<h3>${escapeHTML(m.family)} family</h3><div class="family-links">${family.map(other => `<a href="#${encodeURIComponent(other.id)}" data-close>${escapeHTML(other.name)}</a>`).join('')}</div>` : ''}`;
+  const rites = m.deathDate ? [...getSevenDayObservances(m), ...RITUALS.slice(1), { key: 'annual', label: 'Annual memorial', korean: '기일' }] : [];
+  document.getElementById('remembrance-body').innerHTML = `<h2 id="remembrance-heading">${escapeHTML(m.name)}</h2>${m.remembrance ? `<p class="remembrance-text">${escapeHTML(m.remembrance)}</p>` : ''}${m.deathDate ? `<p class="muted">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</p>` : '<p class="muted">Date of passing not recorded.</p>'}${rites.length ? `<h3>Ritual dates</h3><div class="further-rites">${rites.map(r => ritualButton(m, r, r.key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r))).join('')}</div>${subscriptionLink(m)}<button class="text-button" id="memorial-calendar">Download observances</button>` : ''}${family.length ? `<h3>${escapeHTML(m.family)} family</h3><div class="family-links">${family.map(other => `<a href="#${encodeURIComponent(other.id)}" data-close>${escapeHTML(other.name)}</a>`).join('')}</div>` : ''}`;
   document.getElementById('memorial-calendar')?.addEventListener('click', () => downloadICS(m.id));
   openDialog('remembrance-drawer');
 }

@@ -15,7 +15,7 @@ Existing static HTML, CSS and JavaScript application. Preserve all permanent mem
 The user's September 19, 2026 brief and Front Page / Individual Page references are authoritative. Traditional Korean hanok architecture, real photographs, very little text, restrained sans-serif typography (the user explicitly superseded the original serif direction) and three incense sticks. No corporate navigation or religious decoration. Dexi's original photograph must be unchanged.
 
 ## Ritual time
-Death day is day one. Existing 49th, 100th, first-year, third-year and annual rites remain. The six weekly offsets were inconsistent with inclusive reckoning and require the explicitly permitted correction. Individual memorials with a known passing date show seven weekly dates; unknown dates must never be invented.
+Death day is day one. Existing 49th, 100th, first-year, third-year and annual rites remain. The six weekly offsets were inconsistent with inclusive reckoning and require the explicitly permitted correction. Individual memorials with a known passing date show one next ritual and its full date. The seven early dates and later rites are available in Remembrance & rites under Ritual dates; unknown dates must never be invented.
 
 ## Accessibility
 Semantic links and buttons, keyboard navigation, visible focus, touch targets, readable text, responsive close viewpoints and reduced motion are requirements.

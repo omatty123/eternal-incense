@@ -121,13 +121,15 @@ test('concurrent flower requests cannot bypass the daily limit', async () => {
   assert.equal(run(`getDailyFlowerCount('p-dad')`), 1);
 });
 
-test('Dexi visibly shows the 100-day ceremony after the seven early rites', () => {
+test('Dexi visibly shows only the next ritual with its full date', () => {
   const { run } = app('2026-11-10T12:00:00');
   const html = run(`renderObservancesHTML(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))`);
-  assert.ok(html.includes('Next ceremony: 100 days'));
+  assert.ok(html.includes('Next ritual: 100 days'));
   assert.ok(html.includes('December 26, 2026'));
   assert.ok(html.includes('data-observance="100day"'));
-  assert.equal((html.match(/class="observance /g) || []).length, 7);
+  assert.equal((html.match(/data-observance=/g) || []).length, 1);
+  assert.ok(html.indexOf("December 26, 2026") < html.indexOf("Next ritual: 100 days"));
+  assert.ok(html.includes('aria-label="Dae Dexi, 100th Day, December 26, 2026. Calendar options"'));
 });
 
 test('next ceremony keeps today through midnight then advances to the next milestone', () => {
@@ -156,4 +158,11 @@ test('annual ceremonies roll over after today and milestone dates are not duplic
   assert.equal(run(`localDateString(getMemorialUpcomingObservances({deathDate:'2020-09-18'})[0].date)`), '2026-09-18');
   const after = app('2026-09-19T00:00:00');
   assert.equal(after.run(`localDateString(getMemorialUpcomingObservances({deathDate:'2020-09-18'})[0].date)`), '2027-09-18');
+});
+
+
+test('every dated memorial shows exactly one next ritual and undated memorials show none', () => {
+  const { run } = app('2026-11-10T12:00:00');
+  const pages = JSON.parse(run(`JSON.stringify(PERMANENT_MEMORIALS.map(m => ({ id: m.id, dated: Boolean(m.deathDate), html: renderObservancesHTML(m) })))`));
+  for (const page of pages) assert.equal((page.html.match(/data-observance=/g) || []).length, page.dated ? 1 : 0, page.id);
 });

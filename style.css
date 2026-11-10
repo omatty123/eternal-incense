@@ -123,10 +123,8 @@ h1, h2, h3 { font-weight: 400; }
 .memorial-actions .text-button { min-height: 36px; }
 #flower-display { font-size: 13px; }
 .individual-observances { position: absolute; bottom: 124px; left: 12.5%; right: 12.5%; padding-top: 14px; border-top: 1px solid var(--line); text-shadow: 0 2px 5px #000; }
-.memorial-next-ceremony { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 16px; width: 100%; padding: 0 16px 10px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 16px; min-height: 44px; text-shadow: inherit; }
-.memorial-next-ceremony:hover, .memorial-next-ceremony:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
-.memorial-next-ceremony time { white-space: nowrap; }
-.individual-observances .observance { text-align: center; flex-basis: 0; min-width: 102px; gap: 5px; }
+.individual-observances .next-ritual { align-items: center; width: 100%; min-height: 68px; gap: 5px; text-align: center; }
+.individual-observances .next-ritual:hover, .individual-observances .next-ritual:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .individual-observances .observance time { font-size: clamp(23px, 1.7vw, 30px); }
 .individual-observances .observance-day { font-family: var(--type); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
 .memorial-neighbors { position: absolute; bottom: 67px; left: 7.7%; right: 7.7%; display: flex; justify-content: space-between; gap: 30px; }
@@ -184,7 +182,7 @@ summary { cursor: pointer; min-height: 44px; }
 
 /* Reserve a quiet lower band even when a wide screen crops the room. */
 @media (min-width: 901px) {
-  .memorial-room { --scene-y: min(calc((var(--room-h) - var(--scene-h)) / 2), calc(var(--room-h) - 360px - var(--scene-h) * .704)); }
+  .memorial-room { --scene-y: min(calc((var(--room-h) - var(--scene-h)) / 2), calc(var(--room-h) - 310px - var(--scene-h) * .704)); }
   .individual-portrait h1 { overflow-wrap: anywhere; }
 }
 
@@ -217,8 +215,8 @@ summary { cursor: pointer; min-height: 44px; }
   .quiet-tools { left: 28px; right: 28px; top: calc(var(--room-h) - 58px); font-size: 15px; }
   .tool-translation { display: none; }
   #prayer-open :lang(ko) { font-size: 14px; }
-  .memorial-room { --room-h: max(1000px, 100svh); }
-  .view-memorial { --room-h: max(1000px, 100svh); }
+  .memorial-room { --room-h: max(950px, 100svh); }
+  .view-memorial { --room-h: max(950px, 100svh); }
   .memorial-room .room-stage { background-size: auto 850px; background-position: 60% -60px; }
   .dp-back { left: 26px; top: 21px; font-size: 18px; }
   .individual-portrait { left: max(32px, calc(50% - 170px)); top: 282px; width: 230px; }
@@ -231,10 +229,7 @@ summary { cursor: pointer; min-height: 44px; }
   .memorial-actions { left: 28px; right: 28px; top: 620px; max-width: none; flex-direction: row; justify-content: space-between; flex-wrap: wrap; gap: 2px 18px; }
   .memorial-actions .text-button { min-height: 44px; font-size: 16px; }
   #flower-display { order: 3; width: 100%; }
-  .individual-observances { bottom: 156px; left: 28px; right: 0; padding-top: 16px; }
-  .individual-observances .observance-list { padding-right: 28px; }
-  .individual-observances .observance { min-width: 104px; text-align: left; padding-left: 16px; }
-  .individual-observances .observance:first-child { padding-left: 0; min-width: 90px; }
+  .individual-observances { bottom: 156px; left: 28px; right: 28px; padding-top: 16px; }
   .individual-observances .observance time { font-size: 25px; }
   .memorial-neighbors { left: 28px; right: 28px; bottom: 80px; }
   .dp-nav { font-size: 15px; max-width: 48%; line-height: 1.2; }

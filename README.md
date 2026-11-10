@@ -19,7 +19,7 @@ Run `python3 -m http.server 4173 --bind 127.0.0.1` in this directory and open `h
 
 All 17 permanent records, original photograph paths, seed prayers and storage keys are unchanged. Dexi's `images/dexi-clean.png` is byte-identical to the supplied original photograph. Existing local additions, hidden records and prayers continue using their original keys. Older-format migration merges with existing additions.
 
-Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. This fixes the former six weekly offsets that were one day later than the established inclusive 49th-day rule. Existing weekly reminder opt-in and 49th/100th/one-year/three-year schedules remain. Each memorial shows its next applicable ceremony and full date above the seven early observances. Annual memorials stay current throughout their calendar day. Unknown passing dates never produce invented observances.
+Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. This fixes the former six weekly offsets that were one day later than the established inclusive 49th-day rule. Existing weekly reminder opt-in and 49th/100th/one-year/three-year schedules remain. Each memorial shows one centered next ritual with its full date. All seven early dates and later rites remain available under Ritual dates in Remembrance & rites. Annual memorials stay current throughout their calendar day. Unknown passing dates never produce invented observances.
 
 ## Calendar subscriptions
 
