@@ -19,13 +19,13 @@ Run `python3 -m http.server 4173 --bind 127.0.0.1` in this directory and open `h
 
 All 17 permanent records, original photograph paths, seed prayers and storage keys are unchanged. Dexi's `images/dexi-clean.png` is byte-identical to the supplied original photograph. Existing local additions, hidden records and prayers continue using their original keys. Older-format migration merges with existing additions.
 
-Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. This fixes the former six weekly offsets that were one day later than the established inclusive 49th-day rule. Existing weekly reminder opt-in and 49th/100th/one-year/three-year schedules remain. Annual memorials stay current throughout their calendar day. Unknown passing dates never produce invented observances.
+Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. This fixes the former six weekly offsets that were one day later than the established inclusive 49th-day rule. Existing weekly reminder opt-in and 49th/100th/one-year/three-year schedules remain. Each memorial shows its next applicable ceremony and full date above the seven early observances. Annual memorials stay current throughout their calendar day. Unknown passing dates never produce invented observances.
 
 ## Calendar subscriptions
 
 The deployment builds `calendar.ics` and `calendars/<id>.ics` from the permanent public records in `app.js`. Run `node scripts/build-calendar.cjs` for local preview. GitHub Actions runs the tests and rebuilds the feeds on every publication. Annual memorials recur indefinitely; the feed retains historical rites and stable event IDs so refreshes can update existing events. Subscription alerts are at 9 a.m., seven days before, one day before and on the memorial date.
 
-The combined subscription URL is `https://omatty123.github.io/eternal-incense/calendar.ics`. Apple Calendar can open the site's `webcal:` links. In Apple Calendar, choose iCloud for other Apple devices, keep event alerts, and choose an automatic refresh interval. Other calendar clients can subscribe to the HTTPS URL; refresh timing is controlled by the client. Previously imported Google events are separate copies and are not automatically removed by subscribing.
+The combined subscription URL is `https://omatty123.github.io/eternal-incense/calendar.ics`. Apple Calendar can open the site's `webcal:` links. In Apple Calendar, choose iCloud for other Apple devices, keep event alerts, and choose an automatic refresh interval. Other calendar clients can subscribe to the HTTPS URL; the feed requests a monthly (30-day) refresh as an advisory, and actual refresh timing is controlled by the client. Previously imported Google events are separate copies and are not automatically removed by subscribing.
 
 Only the 14 dated permanent memorials are included. Browser-only additions, hidden-record preferences and prayer notes never enter the public feeds. Three undated memorials generate no calendar events.
 

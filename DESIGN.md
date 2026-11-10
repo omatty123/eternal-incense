@@ -73,9 +73,9 @@ The hall title is light and softly spaced. Memorial names use regular weight wit
 
 Desktop presents a full photographic room with a minimum height of 680px. Live objects track the 3:2 scene's coordinates. Portraits share a physical shelf baseline and scroll horizontally to accommodate every record; names are their only shelf metadata.
 
-At widths of 901px and above, the individual room's vertical scene offset is capped to reserve a 310px lower band beneath the action anchor. Preserve this reservation: long names, offering controls, ritual dates and neighbor links must remain separate on laptop and wide screens.
+At widths of 901px and above, the individual room's vertical scene offset is capped to reserve a 360px lower band beneath the action anchor. Preserve this reservation: long names, offering controls, ritual dates and neighbor links must remain separate on laptop and wide screens.
 
-At 900px and below, use a closer viewpoint rather than shrinking the desktop scene. The hall is at least 850px tall and the individual room at least 930px. Mobile portraits remain substantial, observances scroll horizontally, and actions sit below the portrait. Tablet adjustments cover 600–900px; compact adjustments cover widths through 360px.
+At 900px and below, use a closer viewpoint rather than shrinking the desktop scene. The hall is at least 850px tall and the individual room at least 1000px. Mobile portraits remain substantial, observances scroll horizontally, and actions sit below the portrait. Tablet adjustments cover 600–900px; compact adjustments cover widths through 360px.
 
 ## Elevation & Depth
 

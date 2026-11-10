@@ -379,7 +379,7 @@ function generateSubscriptionICS(sourceTimestamp, memorialId = null) {
   const name = memorialId && memorials.length ? `Eternal Incense — ${memorials[0].name}` : 'Eternal Incense — Memorial Rites';
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Eternal Incense//EN',
     'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `NAME:${escapeICS(name)}`,
-    `X-WR-CALNAME:${escapeICS(name)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+    `X-WR-CALNAME:${escapeICS(name)}`, 'REFRESH-INTERVAL;VALUE=DURATION:P30D', 'X-PUBLISHED-TTL:P30D'];
   memorials.filter(m => m.deathDate).forEach(m => {
     const rites = [...getRitualsFor(m), { key: 'annual', label: 'Annual', korean: '기일', years: 1 }];
     rites.forEach(r => {
@@ -486,22 +486,22 @@ function getNeighbors(id) {
   return { prev: all[(i - 1 + all.length) % all.length], next: all[(i + 1) % all.length] };
 }
 
-function getUpcomingObservances() {
-  const upcoming = [];
-  loadMemorials().forEach(m => {
-    if (!m.deathDate) return;
-    getRitualsFor(m).forEach(r => {
-      const date = getRitualDate(m.deathDate, r);
-      const diff = daysBetween(new Date(), date);
-      if (diff >= 0) upcoming.push({ m, r, date, diff });
-    });
-    const date = getNextAnnualMemorial(m.deathDate);
-    // Year-one and year-three anniversaries are already represented by their rites.
-    if (!upcoming.some(o => o.m.id === m.id && localDateString(o.date) === localDateString(date))) {
-      upcoming.push({ m, r: { key: 'annual', label: 'Annual memorial', korean: '기일' }, date, diff: daysBetween(new Date(), date) });
-    }
-  });
+function getMemorialUpcomingObservances(m) {
+  if (!m.deathDate) return [];
+  const upcoming = getRitualsFor(m).map(r => {
+    const date = getRitualDate(m.deathDate, r);
+    return { m, r, date, diff: daysBetween(new Date(), date) };
+  }).filter(o => o.diff >= 0);
+  const date = getNextAnnualMemorial(m.deathDate);
+  // A milestone and annual memorial on the same date are one ceremony.
+  if (!upcoming.some(o => localDateString(o.date) === localDateString(date))) {
+    upcoming.push({ m, r: { key: 'annual', label: 'Annual memorial', korean: '기일' }, date, diff: daysBetween(new Date(), date) });
+  }
   return upcoming.sort((a, b) => a.date - b.date);
+}
+
+function getUpcomingObservances() {
+  return loadMemorials().flatMap(getMemorialUpcomingObservances).sort((a, b) => a.date - b.date);
 }
 
 function ritualButton(m, r, date, showName = false, next = false) {
@@ -517,7 +517,9 @@ function renderObservancesHTML(m) {
   const rites = getSevenDayObservances(m);
   if (!rites.length) return '<p class="unknown-date">Date of passing not recorded</p>';
   const next = rites.find(r => daysBetween(new Date(), getRitualDate(m.deathDate, r)) >= 0);
-  return `<section class="individual-observances" aria-label="Seven memorial observances"><div class="observance-list">${rites.map(r => ritualButton(m, r, getRitualDate(m.deathDate, r), false, r === next)).join('')}</div></section>`;
+  const ceremony = getMemorialUpcomingObservances(m)[0];
+  const label = ceremony.r.key === '100day' ? '100 days' : ceremony.r.label.toLowerCase();
+  return `<section class="individual-observances" aria-label="Memorial observances"><button class="memorial-next-ceremony" data-observance="${escapeHTML(ceremony.r.key)}" data-memorial="${escapeHTML(m.id)}" aria-haspopup="dialog"><span>Next ceremony: ${escapeHTML(label)}${ceremony.diff === 0 ? ' · today' : ''}</span> <time datetime="${localDateString(ceremony.date)}">${formatDate(ceremony.date)}</time></button><div class="observance-list">${rites.map(r => ritualButton(m, r, getRitualDate(m.deathDate, r), false, r === next)).join('')}</div></section>`;
 }
 
 function renderMemorials() {

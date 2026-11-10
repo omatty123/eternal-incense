@@ -32,8 +32,8 @@ test('full public catalog has 14 dated feed records and 76 events', () => {
   assert.ok(items.find(e => e.includes('UID:p-dad-annual@')).includes('DTSTART;VALUE=DATE:20230922'));
   for (const id of ['p-bebe', 'p-louis', 'p-lola']) assert.equal(events(app.generate(stamp, id)).length, 0);
   assert.ok(!feed.includes('NaN'));
-  assert.ok(feed.includes('REFRESH-INTERVAL;VALUE=DURATION:PT1H'));
-  assert.ok(feed.includes('X-PUBLISHED-TTL:PT1H'));
+  assert.ok(feed.includes('REFRESH-INTERVAL;VALUE=DURATION:P30D'));
+  assert.ok(feed.includes('X-PUBLISHED-TTL:P30D'));
 });
 
 test('every event has three alerts and explicit source revision metadata', () => {

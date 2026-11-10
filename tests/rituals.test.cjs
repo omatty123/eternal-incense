@@ -120,3 +120,40 @@ test('concurrent flower requests cannot bypass the daily limit', async () => {
   assert.equal(await first, 1);
   assert.equal(run(`getDailyFlowerCount('p-dad')`), 1);
 });
+
+test('Dexi visibly shows the 100-day ceremony after the seven early rites', () => {
+  const { run } = app('2026-11-10T12:00:00');
+  const html = run(`renderObservancesHTML(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))`);
+  assert.ok(html.includes('Next ceremony: 100 days'));
+  assert.ok(html.includes('December 26, 2026'));
+  assert.ok(html.includes('data-observance="100day"'));
+  assert.equal((html.match(/class="observance /g) || []).length, 7);
+});
+
+test('next ceremony keeps today through midnight then advances to the next milestone', () => {
+  const current = app('2026-12-26T23:59:59');
+  assert.equal(current.run(`getMemorialUpcomingObservances(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))[0].r.key`), '100day');
+  assert.ok(current.run(`renderObservancesHTML(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))`).includes('100 days · today'));
+  const after = app('2026-12-27T00:00:00');
+  assert.equal(after.run(`getMemorialUpcomingObservances(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))[0].r.key`), '1year');
+  assert.equal(after.run(`localDateString(getMemorialUpcomingObservances(PERMANENT_MEMORIALS.find(m => m.id === 'p-dae-dexi'))[0].date)`), '2027-09-18');
+});
+
+test('applicable weekly ceremonies and unknown dates keep their existing scope', () => {
+  const { run } = app('2026-09-19T12:00:00');
+  assert.equal(run(`getMemorialUpcomingObservances({deathDate:'2026-09-18',weeklyRites:true})[0].r.key`), 'weekly-1');
+  assert.equal(run(`getMemorialUpcomingObservances({deathDate:'2026-09-18'})[0].r.key`), '49day');
+  assert.equal(run(`getMemorialUpcomingObservances({deathDate:null}).length`), 0);
+  assert.equal(run(`renderObservancesHTML({deathDate:null})`), '<p class="unknown-date">Date of passing not recorded</p>');
+});
+
+test('annual ceremonies roll over after today and milestone dates are not duplicated', () => {
+  const { run } = app('2026-09-18T23:59:59');
+  for (const deathDate of ['2025-09-18', '2023-09-18']) {
+    assert.equal(run(`getMemorialUpcomingObservances({deathDate:'${deathDate}'}).filter(o => localDateString(o.date) === '2026-09-18').length`), 1);
+  }
+  assert.equal(run(`getMemorialUpcomingObservances({deathDate:'2020-09-18'})[0].r.key`), 'annual');
+  assert.equal(run(`localDateString(getMemorialUpcomingObservances({deathDate:'2020-09-18'})[0].date)`), '2026-09-18');
+  const after = app('2026-09-19T00:00:00');
+  assert.equal(after.run(`localDateString(getMemorialUpcomingObservances({deathDate:'2020-09-18'})[0].date)`), '2027-09-18');
+});
