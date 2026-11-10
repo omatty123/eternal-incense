@@ -10,6 +10,7 @@ Run `python3 -m http.server 4173 --bind 127.0.0.1` in this directory and open `h
 
 - Select a framed photograph to visit a memorial. Scroll the shelf, use its edge controls, or move between photos with the keyboard.
 - Select an observance for its calendar export. The management drawer also exports all upcoming rites and annual memorials.
+- Choose **Subscribe to calendar · automatic updates** in **Tend this space** for the published memorials, or subscribe from an individual observance. Downloads remain available for one-time imports, including memorials saved only in the browser.
 - Open **Prayer book / 기도표** for the existing prayer intentions.
 - Open **Tend this space** for memorial creation, removal/hiding and restoration of permanent memorials.
 - Individual memorials retain flower offerings, daily offering limits, neighboring memorial links, swipe navigation, and additional dates/remembrance/family details.
@@ -20,7 +21,17 @@ All 17 permanent records, original photograph paths, seed prayers and storage ke
 
 Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. This fixes the former six weekly offsets that were one day later than the established inclusive 49th-day rule. Existing weekly reminder opt-in and 49th/100th/one-year/three-year schedules remain. Annual memorials stay current throughout their calendar day. Unknown passing dates never produce invented observances.
 
-## Verification
+## Calendar subscriptions
+
+The deployment builds `calendar.ics` and `calendars/<id>.ics` from the permanent public records in `app.js`. Run `node scripts/build-calendar.cjs` for local preview. GitHub Actions runs the tests and rebuilds the feeds on every publication. Annual memorials recur indefinitely; the feed retains historical rites and stable event IDs so refreshes can update existing events.
+
+The combined subscription URL is `https://omatty123.github.io/eternal-incense/calendar.ics`. Apple Calendar can open the site's `webcal:` links. In Apple Calendar, choose iCloud for other Apple devices, keep event alerts, and choose an automatic refresh interval. Other calendar clients can subscribe to the HTTPS URL; refresh timing is controlled by the client. Previously imported Google events are separate copies and are not automatically removed by subscribing.
+
+Only the 14 dated permanent memorials are included. Browser-only additions, hidden-record preferences and prayer notes never enter the public feeds. Three undated memorials generate no calendar events.
+
+Run `node --test tests/*.test.cjs` for date, storage, offering and subscription tests. Subscription checks cover source changes, stable IDs, indefinite recurrence, alerts, UTF-8 folding and exclusion of private storage.
+
+## Earlier verification
 
 Run `TZ=America/Chicago node --test tests/rituals.test.cjs`. The eleven tests cover inclusive dates, month/year/DST boundaries, annual dates, all-record aggregation, calendar event/alarm integrity, escaping and UTF-8 folding, storage lifecycle flower limits, successful/rejected writes and duplicate submission protection. The original eight date/storage tests also passed with `TZ=Asia/Seoul`.
 

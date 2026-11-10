@@ -368,6 +368,41 @@ function generateICS(memorialId = null, selectedRitual = null) {
   return ics.map(foldICSLine).join('\r\n') + '\r\n';
 }
 
+// Subscription feeds deliberately use public source records, never browser storage.
+function generateSubscriptionICS(sourceTimestamp, memorialId = null) {
+  const revisionDate = new Date(sourceTimestamp);
+  if (sourceTimestamp == null || Number.isNaN(revisionDate.getTime())) {
+    throw new Error('A valid source revision timestamp is required');
+  }
+  const stamp = revisionDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const memorials = PERMANENT_MEMORIALS.filter(m => !memorialId || m.id === memorialId);
+  const name = memorialId && memorials.length ? `Eternal Incense — ${memorials[0].name}` : 'Eternal Incense — Memorial Rites';
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Eternal Incense//EN',
+    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `NAME:${escapeICS(name)}`,
+    `X-WR-CALNAME:${escapeICS(name)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+  memorials.filter(m => m.deathDate).forEach(m => {
+    const rites = [...getRitualsFor(m), { key: 'annual', label: 'Annual', korean: '기일', years: 1 }];
+    rites.forEach(r => {
+      const date = getRitualDate(m.deathDate, r);
+      const summary = `${r.korean} — ${m.name}`;
+      lines.push('BEGIN:VEVENT', `UID:${m.id}-${r.key}@eternal-incense`,
+        `URL:https://omatty123.github.io/eternal-incense/#${encodeURIComponent(m.id)}`,
+        `DTSTAMP:${stamp}`, `LAST-MODIFIED:${stamp}`,
+        `DTSTART;VALUE=DATE:${icsDate(date)}`, `DTEND;VALUE=DATE:${icsNextDay(date)}`);
+      if (r.key === 'annual') lines.push('RRULE:FREQ=YEARLY');
+      lines.push(`SUMMARY:${escapeICS(summary)}`,
+        `DESCRIPTION:${escapeICS(`${r.label} memorial (${r.korean}) for ${m.name}.\nPassing: ${m.deathDate}`)}`);
+      [['-P7D', '7 days until '], ['-P1D', 'Tomorrow: '], ['PT0S', 'Today: ']].forEach(([trigger, prefix]) => {
+        lines.push('BEGIN:VALARM', `TRIGGER:${trigger}`, 'ACTION:DISPLAY',
+          `DESCRIPTION:${escapeICS(prefix + summary)}`, 'END:VALARM');
+      });
+      lines.push('END:VEVENT');
+    });
+  });
+  lines.push('END:VCALENDAR');
+  return lines.map(foldICSLine).join('\r\n') + '\r\n';
+}
+
 function downloadICS(memorialId = null, selectedRitual = null) {
   const content = generateICS(memorialId, selectedRitual);
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
@@ -620,13 +655,18 @@ function findRitual(m, key) {
   return [...getSevenDayObservances(m), ...getRitualsFor(m)].find(r => r.key === key);
 }
 
+function subscriptionLink(m) {
+  if (!PERMANENT_MEMORIALS.some(record => record.id === m.id && record.deathDate)) return '';
+  return `<a class="text-button" href="webcal://omatty123.github.io/eternal-incense/calendars/${encodeURIComponent(m.id)}.ics">Subscribe to all observances · automatic updates</a>`;
+}
+
 function openObservance(id, key) {
   const m = loadMemorials().find(m => m.id === id);
   if (!m?.deathDate) return;
   const r = findRitual(m, key);
   if (!r) return;
   const date = key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r);
-  document.getElementById('observance-body').innerHTML = `<h2 id="observance-title">${escapeHTML(r.label)}</h2><p class="ritual-korean" lang="ko">${r.korean}</p><p class="observance-full-date">${formatDate(date)}</p><a class="observance-memorial-link" href="#${encodeURIComponent(m.id)}" data-close>${escapeHTML(m.name)}</a><button class="btn-primary" id="export-observance">Add to calendar</button><button class="text-button" id="export-memorial">All observances for ${escapeHTML(m.name)}</button>`;
+  document.getElementById('observance-body').innerHTML = `<h2 id="observance-title">${escapeHTML(r.label)}</h2><p class="ritual-korean" lang="ko">${r.korean}</p><p class="observance-full-date">${formatDate(date)}</p><a class="observance-memorial-link" href="#${encodeURIComponent(m.id)}" data-close>${escapeHTML(m.name)}</a>${subscriptionLink(m)}<button class="text-button" id="export-observance">Download this date</button><button class="text-button" id="export-memorial">Download all observances for ${escapeHTML(m.name)}</button>`;
   document.getElementById('export-observance').addEventListener('click', () => downloadICS(m.id, r));
   document.getElementById('export-memorial').addEventListener('click', () => downloadICS(m.id));
   openDialog('observance-dialog');
@@ -635,7 +675,7 @@ function openObservance(id, key) {
 function openRemembrance(m) {
   const family = m.family ? loadMemorials().filter(other => other.family === m.family && other.id !== m.id) : [];
   const rites = m.deathDate ? [...RITUALS.slice(1), { key: 'annual', label: 'Annual memorial', korean: '기일' }] : [];
-  document.getElementById('remembrance-body').innerHTML = `<h2 id="remembrance-heading">${escapeHTML(m.name)}</h2>${m.remembrance ? `<p class="remembrance-text">${escapeHTML(m.remembrance)}</p>` : ''}${m.deathDate ? `<p class="muted">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</p>` : '<p class="muted">Date of passing not recorded.</p>'}${rites.length ? `<h3>Further observances</h3><div class="further-rites">${rites.map(r => ritualButton(m, r, r.key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r))).join('')}</div><button class="text-button" id="memorial-calendar">Add observances to calendar</button>` : ''}${family.length ? `<h3>${escapeHTML(m.family)} family</h3><div class="family-links">${family.map(other => `<a href="#${encodeURIComponent(other.id)}" data-close>${escapeHTML(other.name)}</a>`).join('')}</div>` : ''}`;
+  document.getElementById('remembrance-body').innerHTML = `<h2 id="remembrance-heading">${escapeHTML(m.name)}</h2>${m.remembrance ? `<p class="remembrance-text">${escapeHTML(m.remembrance)}</p>` : ''}${m.deathDate ? `<p class="muted">${formatDate(new Date(m.deathDate + 'T00:00:00'))}</p>` : '<p class="muted">Date of passing not recorded.</p>'}${rites.length ? `<h3>Further observances</h3><div class="further-rites">${rites.map(r => ritualButton(m, r, r.key === 'annual' ? getNextAnnualMemorial(m.deathDate) : getRitualDate(m.deathDate, r))).join('')}</div>${subscriptionLink(m)}<button class="text-button" id="memorial-calendar">Download observances</button>` : ''}${family.length ? `<h3>${escapeHTML(m.family)} family</h3><div class="family-links">${family.map(other => `<a href="#${encodeURIComponent(other.id)}" data-close>${escapeHTML(other.name)}</a>`).join('')}</div>` : ''}`;
   document.getElementById('memorial-calendar')?.addEventListener('click', () => downloadICS(m.id));
   openDialog('remembrance-drawer');
 }
