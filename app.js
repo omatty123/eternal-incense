@@ -392,7 +392,9 @@ function generateSubscriptionICS(sourceTimestamp, memorialId = null) {
       if (r.key === 'annual') lines.push('RRULE:FREQ=YEARLY');
       lines.push(`SUMMARY:${escapeICS(summary)}`,
         `DESCRIPTION:${escapeICS(`${r.label} memorial (${r.korean}) for ${m.name}.\nPassing: ${m.deathDate}`)}`);
-      [['-P7D', '7 days until '], ['-P1D', 'Tomorrow: '], ['PT0S', 'Today: ']].forEach(([trigger, prefix]) => {
+      // All-day events start at midnight. Alert at 9 a.m. on the intended day;
+      // Apple Calendar displays midnight advance alerts as the preceding day.
+      [['-P6DT15H', '7 days until '], ['-PT15H', 'Tomorrow: '], ['PT9H', 'Today: ']].forEach(([trigger, prefix]) => {
         lines.push('BEGIN:VALARM', `TRIGGER:${trigger}`, 'ACTION:DISPLAY',
           `DESCRIPTION:${escapeICS(prefix + summary)}`, 'END:VALARM');
       });

@@ -23,7 +23,7 @@ Death day is day one: the weekly offsets are 6, 13, 20, 27, 34, 41 and 48 days. 
 
 ## Calendar subscriptions
 
-The deployment builds `calendar.ics` and `calendars/<id>.ics` from the permanent public records in `app.js`. Run `node scripts/build-calendar.cjs` for local preview. GitHub Actions runs the tests and rebuilds the feeds on every publication. Annual memorials recur indefinitely; the feed retains historical rites and stable event IDs so refreshes can update existing events.
+The deployment builds `calendar.ics` and `calendars/<id>.ics` from the permanent public records in `app.js`. Run `node scripts/build-calendar.cjs` for local preview. GitHub Actions runs the tests and rebuilds the feeds on every publication. Annual memorials recur indefinitely; the feed retains historical rites and stable event IDs so refreshes can update existing events. Subscription alerts are at 9 a.m., seven days before, one day before and on the memorial date.
 
 The combined subscription URL is `https://omatty123.github.io/eternal-incense/calendar.ics`. Apple Calendar can open the site's `webcal:` links. In Apple Calendar, choose iCloud for other Apple devices, keep event alerts, and choose an automatic refresh interval. Other calendar clients can subscribe to the HTTPS URL; refresh timing is controlled by the client. Previously imported Google events are separate copies and are not automatically removed by subscribing.
 

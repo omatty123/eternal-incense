@@ -39,11 +39,24 @@ test('full public catalog has 14 dated feed records and 76 events', () => {
 test('every event has three alerts and explicit source revision metadata', () => {
   for (const event of events(loadCalendarApp().generate(stamp))) {
     assert.equal((event.match(/BEGIN:VALARM/g) || []).length, 3);
-    for (const trigger of ['-P7D', '-P1D', 'PT0S']) assert.ok(event.includes(`TRIGGER:${trigger}\r\n`));
+    for (const trigger of ['-P6DT15H', '-PT15H', 'PT9H']) assert.ok(event.includes(`TRIGGER:${trigger}\r\n`));
     assert.ok(event.includes('DTSTAMP:20261110T123456Z'));
     assert.ok(event.includes('LAST-MODIFIED:20261110T123456Z'));
   }
   assert.throws(() => loadCalendarApp().generate(), /timestamp/);
+});
+
+test('all-day alerts fall at 9 a.m. seven days before, one day before and on the date', () => {
+  const event = events(loadCalendarApp().generate(stamp, 'p-dae-dexi')).find(e => e.includes('UID:p-dae-dexi-100day@'));
+  const start = new Date('2026-12-26T00:00:00');
+  const dates = [...event.matchAll(/TRIGGER:(-)?P(?:(\d+)D)?T(\d+)H/g)].map(([, minus, days, hours]) => {
+    const date = new Date(start);
+    const sign = minus ? -1 : 1;
+    date.setDate(date.getDate() + sign * Number(days || 0));
+    date.setHours(date.getHours() + sign * Number(hours));
+    return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:00`;
+  });
+  assert.deepEqual(dates, ['2026-12-19 9:00', '2026-12-25 9:00', '2026-12-26 9:00']);
 });
 
 test('UIDs and event dates stay stable across source years', () => {
